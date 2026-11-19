@@ -1,0 +1,146 @@
+/* ---------- セーブ ---------- */
+const Store = {
+  data: null,
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, settings: { sound: true, speech: false } }; },
+  load(snap) {
+    let d = null;
+    try { const raw = localStorage.getItem(CONFIG.saveKey); if (raw) d = JSON.parse(raw); } catch (e) { d = null; }
+    if (!d && snap && snap.v) d = snap;
+    const def = this.def();
+    this.data = Object.assign(def, d || {});
+    this.data.settings = Object.assign(this.def().settings, (d && d.settings) || {});
+    this.data.best = this.data.best || {};
+    this.data.medals = this.data.medals || {}; this.data.jobSeen = this.data.jobSeen || {};
+  },
+  save() { try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ } },
+  reset() { const s = this.data.settings; this.data = this.def(); this.data.settings = s; this.save(); },
+  recalcTotal() { this.data.total = Object.values(this.data.best).reduce((s, b) => s + Math.max(0, b.score || 0), 0); },
+};
+
+/* ---------- 効果音(Web Audio で合成) ---------- */
+const Sfx = {
+  ctx: null,
+  ensure() {
+    if (!this.ctx) { try { const C = window.AudioContext || window.webkitAudioContext; if (C) this.ctx = new C(); } catch (e) { this.ctx = null; } }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+  },
+  tone(freq, dur, o = {}) {
+    if (!Store.data.settings.sound || !this.ctx) return;
+    try {
+      const c = this.ctx, t0 = c.currentTime + (o.at || 0);
+      const osc = c.createOscillator(), g = c.createGain();
+      osc.type = o.type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(o.vol || 0.1, t0 + (o.attack || 0.01));
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g).connect(c.destination);
+      osc.start(t0); osc.stop(t0 + dur + 0.05);
+    } catch (e) { /* 音が出せなくても続行 */ }
+  },
+  chime() { [784, 988, 1175, 1568].forEach((f, i) => this.tone(f, 1.5, { vol: 0.08, at: i * 0.36, attack: 0.02 })); },
+  chimeEnd() { [1568, 1175, 988, 784].forEach((f, i) => this.tone(f, 1.5, { vol: 0.08, at: i * 0.36, attack: 0.02 })); },
+  chimeShort() { this.tone(988, 0.9, { vol: 0.07 }); this.tone(784, 1.1, { vol: 0.07, at: 0.32 }); },
+  beep() { this.tone(1760, 0.09, { type: 'square', vol: 0.04 }); },
+  good() { this.tone(880, 0.12, { type: 'triangle', vol: 0.09 }); this.tone(1320, 0.2, { type: 'triangle', vol: 0.08, at: 0.09 }); },
+  buzz() { this.tone(150, 0.32, { type: 'sawtooth', vol: 0.05 }); this.tone(112, 0.32, { type: 'sawtooth', vol: 0.04, at: 0.05 }); },
+  pop() { this.tone(660, 0.07, { type: 'triangle', vol: 0.05 }); },
+  print() { for (let i = 0; i < 9; i++) this.tone(300 + (i % 3) * 60, 0.05, { type: 'square', vol: 0.022, at: i * 0.09 }); },
+  thunk() { this.tone(90, 0.2, { vol: 0.18 }); },
+};
+
+/* ---------- アナウンス読み上げ(端末の音声) ---------- */
+const Speech = {
+  say(text) {
+    if (!Store.data.settings.speech) return;
+    try {
+      const s = window.speechSynthesis; if (!s) return;
+      s.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ja-JP'; u.rate = 1.05;
+      s.speak(u);
+    } catch (e) { /* 読み上げに対応していない環境 */ }
+  },
+};
+
+/* ---------- 通知 ---------- */
+const Toast = {
+  show(html, kind = 'info', ms = 3400) {
+    const root = document.getElementById('toasts'); if (!root) return;
+    const el = document.createElement('div');
+    el.className = 'toast ' + kind; el.innerHTML = html;
+    root.appendChild(el);
+    while (root.children.length > 3) root.firstChild.remove();
+    setTimeout(() => el.classList.add('out'), ms);
+    setTimeout(() => el.remove(), ms + 400);
+  },
+};
+
+/* ---------- ダイアログ ---------- */
+const Modal = {
+  cb: [], open: false,
+  show({ title, body, actions, wide }) {
+    this.cb = actions.map((a) => a.run);
+    const root = document.getElementById('modal-root');
+    root.innerHTML = `<div class="modal-back"><div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="m-title">
+      <h2 id="m-title">${title}</h2><div class="modal-body">${body}</div>
+      <div class="modal-actions">${actions.map((a, i) => `<button class="btn ${a.cls || ''}" data-mact="${i}">${a.label}</button>`).join('')}</div></div></div>`;
+    this.open = true;
+    const btns = root.querySelectorAll('[data-mact]');
+    if (btns.length) btns[btns.length - 1].focus();
+  },
+  close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; },
+  act(i) { const f = this.cb[i]; this.cb = []; this.close(); if (f) f(); },
+};
+
+/* ---------- 業務マニュアル ---------- */
+const Manual = {
+  open: false,
+  show() {
+    const n = Game.day ? Game.day.n : Store.data.day;
+    const secs = DATA.manual.map((sec) => {
+      const items = sec.items.filter((it) => it.day <= n && (!it.job || Progress.unlocked(it.job)));
+      const locked = sec.items.length - items.length;
+      if (!items.length) return '';
+      return `<section class="msec"><h3>${sec.title}</h3>${items.map((it) => `<div class="mitem"><b>${it.t}${it.day === n && n > 1 ? '<span class="new">NEW</span>' : ''}</b><p>${it.b}</p></div>`).join('')}
+        ${locked && !sec.items[0].job ? `<p class="locked">勤務を続けると、ルールがあと${locked}件追加されます。</p>` : ''}</section>`;
+    }).join('');
+    document.getElementById('manual-root').innerHTML = `<div class="mback" data-act="g:manual-close"></div>
+      <aside class="msheet" role="dialog" aria-modal="true" aria-label="業務マニュアル">
+        <header><div><b>業務マニュアル</b><small>${n}日目時点 · 開いている間は時間が止まります</small></div><button class="btn ghost small" data-act="g:manual-close">閉じる</button></header>
+        <div class="mbody">${secs}</div></aside>`;
+    this.open = true;
+  },
+  hide() { document.getElementById('manual-root').innerHTML = ''; this.open = false; },
+  newItems(n) { return DATA.manual.flatMap((s) => s.items.filter((i) => i.day === n && !i.job).map((i) => ({ ...i, sec: s.title }))); },
+  jobItems(job) { return DATA.manual.flatMap((s) => s.items.filter((i) => i.job === job).map((i) => ({ ...i, sec: s.title }))); },
+};
+
+/* ---------- セリフ ---------- */
+const Talk = {
+  speaksJa(p) { return p.nat === 'JP'; },
+  vars(p) {
+    const f = p.flight, cap = (s) => s.split(' ').map((w) => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+    const c = p.conn ? DATA.cities[p.conn.dest] : null;
+    return { flight: f.no.replace(' ', ''), num: f.num, dest: f.ap.name, destEn: cap(f.ap.en), conn: c ? c.name : '', connEn: c ? cap(c.en) : '', by: p.rebook && p.rebook.byText ? p.rebook.byText : '', buddy: p.buddy ? p.buddy.family : '' };
+  },
+  join(a, b) { return { main: a.main + ' ' + b.main, gloss: [a.gloss, b.gloss].filter(Boolean).join(' ') || undefined }; },
+  fill(s, v) { return s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? v[k] : '')); },
+  line(p, key) {
+    const L = DATA.lines[key], v = this.vars(p);
+    if (this.speaksJa(p)) return { main: this.fill(U.pick(L.ja), v) };
+    const [en, ja] = U.pick(L.en);
+    return { main: this.fill(en, v), gloss: this.fill(ja, v) };
+  },
+  greet(p) {
+    if (p.rebook) return this.join(this.line(p, 'rebook'), this.line(p, 'need_' + p.rebook.kind));
+    if (p.school) return this.line(p, p.school);
+    if (p.late) return this.line(p, 'late');
+    if (p.forgot) return this.line(p, 'forgot');
+    let g = this.line(p, p.svc ? 'svc_' + p.svc : 'greet');
+    if (p.infant) g = this.join(g, this.line(p, 'infant'));
+    if (p.conn) g = this.join(g, this.line(p, 'conn'));
+    if (p.passport && this.speaksJa(p) && !p.svc) g.main += ' パスポートはこちらです。';
+    return g;
+  },
+};
