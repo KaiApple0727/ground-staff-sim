@@ -1116,7 +1116,7 @@ body.phone .t-modes-row { grid-template-columns: 1fr 1fr; }
 .fx-combo.big b { font-size: 88px; }
 @keyframes fxcombo { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); } 22% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); } 70% { opacity: 1; transform: translate(-50%, -60%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -80%) scale(1); } }
 /* 締め切ったら飛行機が飛び立つ */
-.fx-plane { width: 120px; height: 60px; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .25)); animation: fxfly 2.2s cubic-bezier(.5, 0, .7, 1) forwards; }
+.fx-plane { width: 120px; height: 50px; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .25)); animation: fxfly 2.2s cubic-bezier(.5, 0, .7, 1) forwards; }
 .fx-plane svg { width: 100%; height: 100%; display: block; }
 @keyframes fxfly { 0% { opacity: 0; transform: translate(0, 0) rotate(0); } 12% { opacity: 1; } 35% { transform: translate(calc(var(--fx-w) * .35), -6px) rotate(-4deg); } 100% { opacity: 0; transform: translate(var(--fx-w), calc(var(--fx-h) * -.75)) rotate(-16deg) scale(.55); } }
 /* 紙ふぶき */
@@ -1134,8 +1134,10 @@ body.phone .t-modes-row { grid-template-columns: 1fr 1fr; }
 .result .metric { animation: slidein .35s ease-out both; }
 .result .metric:nth-child(2) { animation-delay: .06s; } .result .metric:nth-child(3) { animation-delay: .12s; } .result .metric:nth-child(4) { animation-delay: .18s; }
 /* タイトル:出発案内の上を飛行機が横切る */
-.t-board { position: relative; }
-.t-plane { position: absolute; left: -14%; top: 46%; width: 64px; opacity: 0; pointer-events: none; animation: tplane 18s linear 1.5s infinite; }
+.t-board { position: relative; isolation: isolate; }
+/* 飛行機は文字(パタパタの板・出発案内)の下を通る */
+.t-board > :not(.t-plane) { position: relative; z-index: 1; }
+.t-plane { position: absolute; z-index: 0; left: -14%; top: 46%; width: 72px; opacity: 0; pointer-events: none; animation: tplane 18s linear 1.5s infinite; }
 .t-plane svg { width: 100%; display: block; }
 @keyframes tplane { 0% { left: -14%; top: 52%; opacity: 0; transform: rotate(-9deg); } 3% { opacity: .9; } 30% { left: 112%; top: 6%; opacity: .9; transform: rotate(-9deg); } 31%, 100% { left: 112%; top: 6%; opacity: 0; } }
 /* アニメーション OFF(タイトルの設定・端末の設定) */
@@ -1164,7 +1166,7 @@ const CHANGELOG = [
       'コンボが5・10・15…になると「COMBO!」',
       '搭乗ゲートを締め切ると、飛行機が飛び立つ',
       '結果の画面で、星がひとつずつ出て、スコアが数え上がる。★3つ・自己ベスト・昇進・解禁で紙ふぶき',
-      'タイトル画面の出発案内の上を、ときどき飛行機が横切る',
+      'タイトル画面で、ときどき飛行機が文字の後ろを横切る',
       'タイトル画面の「アニメーション: ON/OFF」で止められる(端末の「視差効果を減らす」設定でも止まる)',
     ],
   },
@@ -2471,6 +2473,20 @@ const Flap = {
 /* ===== 05-art2.js ===== */
 /* ---------- 絵(追加分):機内持ち込みのサイズ確認器・忘れ物のアイコン ---------- */
 Object.assign(Art, {
+
+  // 横から見た旅客機(右向き。尾翼は上、主翼とエンジンは下)
+  plane(fill = '#fff', line = '#1f3a8a', win = line) {
+    return `<svg viewBox="0 0 120 50" aria-hidden="true">
+      <path d="M17 23 L9 4 L18 4 L32 22 Z" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M50 30 L37 44 L46 44 L68 31 Z" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round" opacity=".9"/>
+      <path d="M12 26 Q13 21.5 21 21.5 L97 21.5 Q111 21.5 115 27 Q111 32.5 97 32.5 L21 32.5 Q13 32.5 12 28 Z" fill="${fill}" stroke="${line}" stroke-width="1.6"/>
+      <path d="M11 27 L3 30 L12 30.5 L24 28.5 Z" fill="${fill}" stroke="${line}" stroke-width="1.4" stroke-linejoin="round"/>
+      <rect x="46" y="33.5" width="13" height="5.5" rx="2.7" fill="${fill}" stroke="${line}" stroke-width="1.4"/>
+      <path d="M30 25.5 H93" stroke="${win}" stroke-width="2.2" stroke-dasharray="2.2 2.6" stroke-linecap="round"/>
+      <path d="M103 24.5 Q108 24.5 110.5 26.8" fill="none" stroke="${win}" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+  },
+
   // サイズ確認器。高さ55×幅40cm の枠の前に手荷物を置いた絵。はみ出した部分が枠の外に見える
   sizer(b) {
     const S = 2, x0 = 10, base = 145, fw = 40 * S, fh = 55 * S;
@@ -2949,7 +2965,7 @@ const FX = {
     if (!this.on()) return;
     const st = document.getElementById('stage'); if (!st) return;
     const p = this.pos(st);
-    this.add('fx-plane', `<svg viewBox="0 0 120 60"><path d="M6 36 L44 34 L66 8 L76 8 L64 34 L98 33 Q114 32 114 38 Q114 44 98 43 L64 42 L76 58 L66 58 L44 44 L18 43 L10 52 L4 52 L8 42 Z" fill="#fff" stroke="#1f3a8a" stroke-width="2"/><path d="M88 36h4M80 36h4M72 36h4" stroke="#1f3a8a" stroke-width="2.2"/></svg>`,
+    this.add('fx-plane', Art.plane('#fff', '#1f3a8a'),
       { left: `${p.x - p.w / 2}px`, top: `${p.y + p.h * 0.25}px`, '--fx-w': `${p.w}px`, '--fx-h': `${p.h}px` }, 2300);
   },
 
@@ -3935,7 +3951,7 @@ Scenes.title = {
         <div class="t-kicker">${Flap.word('DEPARTURES 出発')}</div>
         <h1 class="t-main" aria-label="グランドスタッフ シミュレーター">${Flap.word('グランドスタッフ')}</h1>
         <div class="t-sub">${Flap.word('SIMULATOR')}</div>
-        <div class="t-plane" aria-hidden="true"><svg viewBox="0 0 120 60"><path d="M6 36 L44 34 L66 8 L76 8 L64 34 L98 33 Q114 32 114 38 Q114 44 98 43 L64 42 L76 58 L66 58 L44 44 L18 43 L10 52 L4 52 L8 42 Z" fill="#ffb41f"/></svg></div>
+        <div class="t-plane" aria-hidden="true">${Art.plane('#ffb41f', '#ffb41f', '#121519')}</div>
         <div class="t-rows board">${demo.map((d) => `<div class="brow st-${d[5]}"><span class="cell time">${d[0]}</span><span class="cell fno">${d[1]}</span><span class="cell dest">${d[2]}</span><span class="cell gate">${d[3]}</span><span class="cell st">${d[4]}</span></div>`).join('')}</div>
       </section>
       <section class="t-panel ${Cloud.enabled() ? 'has-top' : ''}">

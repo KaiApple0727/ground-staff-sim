@@ -1,5 +1,19 @@
 /* ---------- 絵(追加分):機内持ち込みのサイズ確認器・忘れ物のアイコン ---------- */
 Object.assign(Art, {
+
+  // 横から見た旅客機(右向き。尾翼は上、主翼とエンジンは下)
+  plane(fill = '#fff', line = '#1f3a8a', win = line) {
+    return `<svg viewBox="0 0 120 50" aria-hidden="true">
+      <path d="M17 23 L9 4 L18 4 L32 22 Z" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M50 30 L37 44 L46 44 L68 31 Z" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round" opacity=".9"/>
+      <path d="M12 26 Q13 21.5 21 21.5 L97 21.5 Q111 21.5 115 27 Q111 32.5 97 32.5 L21 32.5 Q13 32.5 12 28 Z" fill="${fill}" stroke="${line}" stroke-width="1.6"/>
+      <path d="M11 27 L3 30 L12 30.5 L24 28.5 Z" fill="${fill}" stroke="${line}" stroke-width="1.4" stroke-linejoin="round"/>
+      <rect x="46" y="33.5" width="13" height="5.5" rx="2.7" fill="${fill}" stroke="${line}" stroke-width="1.4"/>
+      <path d="M30 25.5 H93" stroke="${win}" stroke-width="2.2" stroke-dasharray="2.2 2.6" stroke-linecap="round"/>
+      <path d="M103 24.5 Q108 24.5 110.5 26.8" fill="none" stroke="${win}" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+  },
+
   // サイズ確認器。高さ55×幅40cm の枠の前に手荷物を置いた絵。はみ出した部分が枠の外に見える
   sizer(b) {
     const S = 2, x0 = 10, base = 145, fw = 40 * S, fh = 55 * S;

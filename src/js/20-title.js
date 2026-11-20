@@ -14,7 +14,7 @@ Scenes.title = {
         <div class="t-kicker">${Flap.word('DEPARTURES 出発')}</div>
         <h1 class="t-main" aria-label="グランドスタッフ シミュレーター">${Flap.word('グランドスタッフ')}</h1>
         <div class="t-sub">${Flap.word('SIMULATOR')}</div>
-        <div class="t-plane" aria-hidden="true"><svg viewBox="0 0 120 60"><path d="M6 36 L44 34 L66 8 L76 8 L64 34 L98 33 Q114 32 114 38 Q114 44 98 43 L64 42 L76 58 L66 58 L44 44 L18 43 L10 52 L4 52 L8 42 Z" fill="#ffb41f"/></svg></div>
+        <div class="t-plane" aria-hidden="true">${Art.plane('#ffb41f', '#ffb41f', '#121519')}</div>
         <div class="t-rows board">${demo.map((d) => `<div class="brow st-${d[5]}"><span class="cell time">${d[0]}</span><span class="cell fno">${d[1]}</span><span class="cell dest">${d[2]}</span><span class="cell gate">${d[3]}</span><span class="cell st">${d[4]}</span></div>`).join('')}</div>
       </section>
       <section class="t-panel ${Cloud.enabled() ? 'has-top' : ''}">

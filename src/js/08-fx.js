@@ -56,7 +56,7 @@ const FX = {
     if (!this.on()) return;
     const st = document.getElementById('stage'); if (!st) return;
     const p = this.pos(st);
-    this.add('fx-plane', `<svg viewBox="0 0 120 60"><path d="M6 36 L44 34 L66 8 L76 8 L64 34 L98 33 Q114 32 114 38 Q114 44 98 43 L64 42 L76 58 L66 58 L44 44 L18 43 L10 52 L4 52 L8 42 Z" fill="#fff" stroke="#1f3a8a" stroke-width="2"/><path d="M88 36h4M80 36h4M72 36h4" stroke="#1f3a8a" stroke-width="2.2"/></svg>`,
+    this.add('fx-plane', Art.plane('#fff', '#1f3a8a'),
       { left: `${p.x - p.w / 2}px`, top: `${p.y + p.h * 0.25}px`, '--fx-w': `${p.w}px`, '--fx-h': `${p.h}px` }, 2300);
   },
 

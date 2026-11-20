@@ -1106,7 +1106,7 @@ body.phone .t-modes-row { grid-template-columns: 1fr 1fr; }
 .fx-combo.big b { font-size: 88px; }
 @keyframes fxcombo { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); } 22% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); } 70% { opacity: 1; transform: translate(-50%, -60%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -80%) scale(1); } }
 /* 締め切ったら飛行機が飛び立つ */
-.fx-plane { width: 120px; height: 60px; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .25)); animation: fxfly 2.2s cubic-bezier(.5, 0, .7, 1) forwards; }
+.fx-plane { width: 120px; height: 50px; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .25)); animation: fxfly 2.2s cubic-bezier(.5, 0, .7, 1) forwards; }
 .fx-plane svg { width: 100%; height: 100%; display: block; }
 @keyframes fxfly { 0% { opacity: 0; transform: translate(0, 0) rotate(0); } 12% { opacity: 1; } 35% { transform: translate(calc(var(--fx-w) * .35), -6px) rotate(-4deg); } 100% { opacity: 0; transform: translate(var(--fx-w), calc(var(--fx-h) * -.75)) rotate(-16deg) scale(.55); } }
 /* 紙ふぶき */
@@ -1124,8 +1124,10 @@ body.phone .t-modes-row { grid-template-columns: 1fr 1fr; }
 .result .metric { animation: slidein .35s ease-out both; }
 .result .metric:nth-child(2) { animation-delay: .06s; } .result .metric:nth-child(3) { animation-delay: .12s; } .result .metric:nth-child(4) { animation-delay: .18s; }
 /* タイトル:出発案内の上を飛行機が横切る */
-.t-board { position: relative; }
-.t-plane { position: absolute; left: -14%; top: 46%; width: 64px; opacity: 0; pointer-events: none; animation: tplane 18s linear 1.5s infinite; }
+.t-board { position: relative; isolation: isolate; }
+/* 飛行機は文字(パタパタの板・出発案内)の下を通る */
+.t-board > :not(.t-plane) { position: relative; z-index: 1; }
+.t-plane { position: absolute; z-index: 0; left: -14%; top: 46%; width: 72px; opacity: 0; pointer-events: none; animation: tplane 18s linear 1.5s infinite; }
 .t-plane svg { width: 100%; display: block; }
 @keyframes tplane { 0% { left: -14%; top: 52%; opacity: 0; transform: rotate(-9deg); } 3% { opacity: .9; } 30% { left: 112%; top: 6%; opacity: .9; transform: rotate(-9deg); } 31%, 100% { left: 112%; top: 6%; opacity: 0; } }
 /* アニメーション OFF(タイトルの設定・端末の設定) */
