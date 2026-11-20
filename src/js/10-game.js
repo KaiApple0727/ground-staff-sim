@@ -76,6 +76,7 @@ const Game = {
     else if (a === 'profile') Cloud.showProfile();
     else if (a === 'icon') Cloud.showIconPicker();
     else if (a === 'changelog') this.showChangelog();
+    else if (a === 'quit-title') this.askQuit();
     else if (a === 'mode') Modes.ask(ds.k);
     else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'icon-crop') Cloud.showCropper();
@@ -110,6 +111,17 @@ const Game = {
     if (st.seenVer !== CONFIG.version) { st.seenVer = CONFIG.version; Store.saveLocal(); const d = document.querySelector('.new-dot'); if (d) d.remove(); }
   },
 
+  // 一時停止中に「タイトルにもどる」
+  askQuit() {
+    const run = this.run;
+    Modal.show({ soft: true,
+      title: 'タイトルにもどりますか?',
+      body: run ? `<p>${Modes.KINDS[run.kind].name}は、ここで終わりになります。<b>ここまでの記録は残ります。</b></p>`
+        : '<p>今日の勤務は、<b>ここまでの分が記録されません</b>。クリアした日の記録やランクは、そのまま残ります。</p>',
+      actions: [{ label: 'やめる', cls: 'ghost' }, { label: 'タイトルにもどる', cls: 'danger', run: () => this.go('title') }],
+    });
+  },
+
   setPause(v) {
     this.paused = !!(v && this.scene && this.scene.timed);
     const ov = document.getElementById('pause-ov'); if (ov) ov.hidden = !this.paused;
@@ -133,7 +145,6 @@ const Game = {
   decision(ok) {
     const d = this.day; d.dec++;
     if (!ok && this.run) Modes.fail(Modes.lastBad());   // ミスするまで続くモードは、ここで終わり
-    FX.flash(ok);
     if (ok) {
       d.good++; d.combo++; d.maxCombo = Math.max(d.maxCombo, d.combo);
       if (d.combo >= 5) d.score.combo += Math.min(10, Math.floor(d.combo / 2));

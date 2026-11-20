@@ -1,5 +1,5 @@
 /* ---------- アニメーション(演出) ----------
-   点数のポップアップ・正解/ミスの光・コンボ・出発する飛行機・紙ふぶき・数字のカウントアップ・画面の切り替え。
+   点数のポップアップ・コンボ・出発する飛行機・紙ふぶき・数字のカウントアップ・画面の切り替え。
    どれもゲームを待たせない(操作はすぐできる)。タイトルの「アニメーション: OFF」か、
    端末の「視差効果を減らす」設定のときは出さない */
 const FX = {
@@ -33,14 +33,6 @@ const FX = {
     const p = this.pos(sc);
     this.add(`fx-pts ${pts < 0 ? 'neg' : ''}`, U.signed(pts), { left: `${p.x}px`, top: `${p.y + p.h / 2}px` }, 1000);
     this.replay(sc, 'bump');
-  },
-
-  // 正解・ミスのとき、画面のふちが一瞬光る
-  flash(ok) {
-    if (!this.on()) return;
-    const app = this.app(); if (!app) return;
-    app.classList.remove('fx-good', 'fx-bad'); void app.offsetWidth; app.classList.add(ok ? 'fx-good' : 'fx-bad');
-    clearTimeout(this._fl); this._fl = setTimeout(() => app.classList.remove('fx-good', 'fx-bad'), 420);
   },
 
   // コンボが 5・10・15… になったとき
