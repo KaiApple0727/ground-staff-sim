@@ -40,7 +40,7 @@ Scenes.result = {
       <div class="r-left">
         <section class="panel r-head">
           <div class="r-stars" aria-label="星${stars}つ">${[1, 2, 3].map((i) => Art.star(i <= stars)).join('')}</div>
-          <div class="r-title"><p class="eyebrow">${U.jp(d.date)} · ${d.cfg.title}</p><h2>${verdict}</h2>
+          <div class="r-title"><p class="eyebrow">${U.jp(d.date)} · ${d.cfg.title}${Cloud.name() ? ` · ${U.esc(Cloud.name())}さん` : ''}</p><h2>${verdict}</h2>
             ${d.recordBest ? '<span class="pill ok">1日の最高記録を更新!</span>' : d.newBest ? '<span class="pill ok">この日の自己ベスト</span>' : ''}</div>
           <div class="r-score"><small>本日のスコア</small><b>${U.fmt(score)}</b></div>
         </section>
@@ -63,6 +63,7 @@ Scenes.result = {
           <button class="btn primary big" data-act="next">${d.n + 1}日目の勤務へ</button>
           <button class="btn" data-act="retry">この日をやり直す</button>
           <button class="btn ghost" data-act="title">タイトルへ</button>
+          ${Cloud.user ? '<button class="btn ghost" data-act="g:ranking">ランキング</button>' : ''}
         </div>
       </div>
       <div class="panel r-logs">

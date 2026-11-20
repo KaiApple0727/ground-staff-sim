@@ -120,7 +120,10 @@ h1, h2, h3 { text-wrap: balance; }
 .t-sub { font-size: 30px; }
 .t-rows { margin-top: 14px; }
 .t-rows .brow { grid-template-columns: 74px 96px minmax(0, 1fr) 44px minmax(0, 1fr); }
-.t-panel { background: var(--hall); padding: 34px 40px; display: flex; flex-direction: column; justify-content: center; gap: 16px; overflow: auto; }
+.t-panel { background: var(--hall); padding: 26px 40px; display: flex; flex-direction: column; justify-content: flex-start; gap: 12px; overflow: auto; }
+/* 収まるときは上下中央、収まらないときは上から見えるように */
+.t-panel > :first-child { margin-top: auto; }
+.t-panel > :last-child { margin-bottom: auto; }
 .lede { font-size: 16px; margin: 0; max-width: 34em; }
 .howto { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: h; }
 .howto li { display: grid; grid-template-columns: 28px 1fr; column-gap: 10px; counter-increment: h; }
@@ -898,3 +901,32 @@ body.phone .scale-area:has(.carry-card) .belt { width: 110px; }
 /* 機内持ち込みは手荷物の手順でだけ出す。そのあいだ、ひとり旅の申込書は引っ込める(書類の確認で見たもの) */
 .counter-scene:not([data-step="bag"]) .carry-card { display: none; }
 .counter-scene[data-step="bag"] .scale-area:has(.carry-card) .umform { display: none; }
+
+/* ===== ログイン・ランキング ===== */
+.acct { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; display: grid; gap: 7px; font-size: 13px; }
+.acct p { margin: 0; }
+.acct.in { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.acct-who { display: flex; align-items: center; gap: 8px; }
+.acct-who b { font-size: 15px; }
+.acct-who small { display: block; font-size: 11px; color: var(--ok); }
+.acct-who small.bad { color: var(--bad); }
+.acct-ic { width: 30px; height: 30px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 15px; }
+.acct-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.btn.google { display: inline-flex; align-items: center; gap: 8px; background: #fff; border-color: #9aa3ad; }
+.g-ic { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #fff; background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); }
+.name-input { width: 100%; font: inherit; font-size: 18px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px; margin-top: 6px; }
+.name-input:focus { outline: 3px solid rgba(43, 79, 181, .35); border-color: var(--brand); }
+.rk-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.rk-tab { flex: 1; border: 1.5px solid var(--line); background: #fff; border-radius: 8px; padding: 8px; font-weight: 700; cursor: pointer; color: var(--ink); }
+.rk-tab[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+.rk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: min(52vh, 420px); overflow: auto; }
+.rk-list li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.rk-list li.me { border-color: var(--brand); background: #eef2fb; }
+.rk-list li.rk-msg { display: block; color: var(--mute); text-align: center; padding: 14px; }
+.rk-no { font-family: var(--f-dot); font-size: 18px; text-align: center; color: var(--mute); }
+.rk-list li:nth-child(1) .rk-no { color: #c99a14; } .rk-list li:nth-child(2) .rk-no { color: #8d969f; } .rk-list li:nth-child(3) .rk-no { color: #a4643a; }
+.rk-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-name em { font-style: normal; font-size: 10.5px; color: #fff; background: var(--brand); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
+.rk-day { font-size: 11.5px; color: var(--mute); }
+.rk-val { font-family: var(--f-mono); font-size: 16px; text-align: right; }
+.rk-val small { font-size: 11px; margin-left: 2px; }

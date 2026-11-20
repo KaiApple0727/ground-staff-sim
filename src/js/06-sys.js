@@ -1,7 +1,7 @@
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, settings: { sound: true, speech: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, owner: null, settings: { sound: true, speech: false } }; },
   load(snap) {
     let d = null;
     try { const raw = localStorage.getItem(CONFIG.saveKey); if (raw) d = JSON.parse(raw); } catch (e) { d = null; }
@@ -12,7 +12,32 @@ const Store = {
     this.data.best = this.data.best || {};
     this.data.medals = this.data.medals || {}; this.data.jobSeen = this.data.jobSeen || {};
   },
-  save() { try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ } },
+  save() {
+    try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ }
+    if (typeof Cloud !== 'undefined' && Cloud.user) Cloud.push();   // ログイン中はクラウドにも
+  },
+  // クラウドに送る分(音などの設定は端末ごと)
+  cloudData() { const d = this.data; return { v: d.v, day: d.day, total: d.total, best: d.best, medals: d.medals, bestDay: d.bestDay, jobSeen: d.jobSeen }; },
+  // 別の端末の記録と合わせる(日ごとの最高点・メダル・進んだ日数は、よいほうを残す)
+  merge(o) {
+    if (!o) return false;
+    const d = this.data; let changed = false;
+    if ((o.day || 1) > d.day) { d.day = o.day; changed = true; }
+    for (const [n, b] of Object.entries(o.best || {})) {
+      const a = d.best[n];
+      if (!a || (b.score || 0) > (a.score || 0)) { d.best[n] = { score: b.score || 0, stars: Math.max(b.stars || 0, a ? a.stars || 0 : 0) }; changed = true; }
+      else if ((b.stars || 0) > (a.stars || 0)) { a.stars = b.stars; changed = true; }
+    }
+    for (const [n, list] of Object.entries(o.medals || {})) {
+      const had = new Set(d.medals[n] || []), before = had.size;
+      for (const x of list || []) had.add(x);
+      if (had.size !== before) { d.medals[n] = [...had]; changed = true; }
+    }
+    if (o.bestDay && (!d.bestDay || o.bestDay.score > d.bestDay.score)) { d.bestDay = { score: o.bestDay.score, n: o.bestDay.n }; changed = true; }
+    for (const k of Object.keys(o.jobSeen || {})) if (!d.jobSeen[k]) { d.jobSeen[k] = true; changed = true; }
+    this.recalcTotal();
+    return changed;
+  },
   reset() { const s = this.data.settings; this.data = this.def(); this.data.settings = s; this.save(); },
   recalcTotal() { this.data.total = Object.values(this.data.best).reduce((s, b) => s + Math.max(0, b.score || 0), 0); },
 };
@@ -90,7 +115,12 @@ const Modal = {
     if (btns.length) btns[btns.length - 1].focus();
   },
   close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; },
-  act(i) { const f = this.cb[i]; this.cb = []; this.close(); if (f) f(); },
+  // ボタンを押したとき、モーダルの中の入力欄(name 付き)の値をまとめて渡す
+  act(i) {
+    const f = this.cb[i], vals = {};
+    document.querySelectorAll('#modal-root [name]').forEach((x) => { vals[x.name] = x.value; });
+    this.cb = []; this.close(); if (f) f(vals);
+  },
 };
 
 /* ---------- 業務マニュアル ---------- */

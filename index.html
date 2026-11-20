@@ -130,7 +130,10 @@ h1, h2, h3 { text-wrap: balance; }
 .t-sub { font-size: 30px; }
 .t-rows { margin-top: 14px; }
 .t-rows .brow { grid-template-columns: 74px 96px minmax(0, 1fr) 44px minmax(0, 1fr); }
-.t-panel { background: var(--hall); padding: 34px 40px; display: flex; flex-direction: column; justify-content: center; gap: 16px; overflow: auto; }
+.t-panel { background: var(--hall); padding: 26px 40px; display: flex; flex-direction: column; justify-content: flex-start; gap: 12px; overflow: auto; }
+/* 収まるときは上下中央、収まらないときは上から見えるように */
+.t-panel > :first-child { margin-top: auto; }
+.t-panel > :last-child { margin-bottom: auto; }
 .lede { font-size: 16px; margin: 0; max-width: 34em; }
 .howto { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: h; }
 .howto li { display: grid; grid-template-columns: 28px 1fr; column-gap: 10px; counter-increment: h; }
@@ -909,6 +912,35 @@ body.phone .scale-area:has(.carry-card) .belt { width: 110px; }
 .counter-scene:not([data-step="bag"]) .carry-card { display: none; }
 .counter-scene[data-step="bag"] .scale-area:has(.carry-card) .umform { display: none; }
 
+/* ===== ログイン・ランキング ===== */
+.acct { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; display: grid; gap: 7px; font-size: 13px; }
+.acct p { margin: 0; }
+.acct.in { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.acct-who { display: flex; align-items: center; gap: 8px; }
+.acct-who b { font-size: 15px; }
+.acct-who small { display: block; font-size: 11px; color: var(--ok); }
+.acct-who small.bad { color: var(--bad); }
+.acct-ic { width: 30px; height: 30px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 15px; }
+.acct-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.btn.google { display: inline-flex; align-items: center; gap: 8px; background: #fff; border-color: #9aa3ad; }
+.g-ic { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #fff; background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); }
+.name-input { width: 100%; font: inherit; font-size: 18px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px; margin-top: 6px; }
+.name-input:focus { outline: 3px solid rgba(43, 79, 181, .35); border-color: var(--brand); }
+.rk-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.rk-tab { flex: 1; border: 1.5px solid var(--line); background: #fff; border-radius: 8px; padding: 8px; font-weight: 700; cursor: pointer; color: var(--ink); }
+.rk-tab[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+.rk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: min(52vh, 420px); overflow: auto; }
+.rk-list li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.rk-list li.me { border-color: var(--brand); background: #eef2fb; }
+.rk-list li.rk-msg { display: block; color: var(--mute); text-align: center; padding: 14px; }
+.rk-no { font-family: var(--f-dot); font-size: 18px; text-align: center; color: var(--mute); }
+.rk-list li:nth-child(1) .rk-no { color: #c99a14; } .rk-list li:nth-child(2) .rk-no { color: #8d969f; } .rk-list li:nth-child(3) .rk-no { color: #a4643a; }
+.rk-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-name em { font-style: normal; font-size: 10.5px; color: #fff; background: var(--brand); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
+.rk-day { font-size: 11.5px; color: var(--mute); }
+.rk-val { font-family: var(--f-mono); font-size: 16px; text-align: right; }
+.rk-val small { font-size: 11px; margin-left: 2px; }
+
 </style>
 </head>
 <body>
@@ -954,6 +986,13 @@ const CONFIG = {
     obBest: 60, obOk: 30, obDecline: 40, obBad: -150, obExtra: -100, obShort: -200,
   },
 };
+
+/* ===== 00-firebase.js ===== */
+/* ---------- Firebase(ログイン・クラウド保存・ランキング)の設定 ----------
+   Firebase コンソールの「プロジェクトの設定」→「マイアプリ」にある firebaseConfig をここに入れる。
+   null のままなら、ログイン関係のボタンは出ず、今までどおりこの端末だけに保存して遊べる。
+   (この値はページに公開されるもので、パスワードではない。守りは Firestore のルールで行う) */
+const FIREBASE_CONFIG = null;
 
 /* ===== 01-util.js ===== */
 /* ---------- 汎用ヘルパー ---------- */
@@ -2206,7 +2245,7 @@ Object.assign(Art, {
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, settings: { sound: true, speech: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, owner: null, settings: { sound: true, speech: false } }; },
   load(snap) {
     let d = null;
     try { const raw = localStorage.getItem(CONFIG.saveKey); if (raw) d = JSON.parse(raw); } catch (e) { d = null; }
@@ -2217,7 +2256,32 @@ const Store = {
     this.data.best = this.data.best || {};
     this.data.medals = this.data.medals || {}; this.data.jobSeen = this.data.jobSeen || {};
   },
-  save() { try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ } },
+  save() {
+    try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ }
+    if (typeof Cloud !== 'undefined' && Cloud.user) Cloud.push();   // ログイン中はクラウドにも
+  },
+  // クラウドに送る分(音などの設定は端末ごと)
+  cloudData() { const d = this.data; return { v: d.v, day: d.day, total: d.total, best: d.best, medals: d.medals, bestDay: d.bestDay, jobSeen: d.jobSeen }; },
+  // 別の端末の記録と合わせる(日ごとの最高点・メダル・進んだ日数は、よいほうを残す)
+  merge(o) {
+    if (!o) return false;
+    const d = this.data; let changed = false;
+    if ((o.day || 1) > d.day) { d.day = o.day; changed = true; }
+    for (const [n, b] of Object.entries(o.best || {})) {
+      const a = d.best[n];
+      if (!a || (b.score || 0) > (a.score || 0)) { d.best[n] = { score: b.score || 0, stars: Math.max(b.stars || 0, a ? a.stars || 0 : 0) }; changed = true; }
+      else if ((b.stars || 0) > (a.stars || 0)) { a.stars = b.stars; changed = true; }
+    }
+    for (const [n, list] of Object.entries(o.medals || {})) {
+      const had = new Set(d.medals[n] || []), before = had.size;
+      for (const x of list || []) had.add(x);
+      if (had.size !== before) { d.medals[n] = [...had]; changed = true; }
+    }
+    if (o.bestDay && (!d.bestDay || o.bestDay.score > d.bestDay.score)) { d.bestDay = { score: o.bestDay.score, n: o.bestDay.n }; changed = true; }
+    for (const k of Object.keys(o.jobSeen || {})) if (!d.jobSeen[k]) { d.jobSeen[k] = true; changed = true; }
+    this.recalcTotal();
+    return changed;
+  },
   reset() { const s = this.data.settings; this.data = this.def(); this.data.settings = s; this.save(); },
   recalcTotal() { this.data.total = Object.values(this.data.best).reduce((s, b) => s + Math.max(0, b.score || 0), 0); },
 };
@@ -2295,7 +2359,12 @@ const Modal = {
     if (btns.length) btns[btns.length - 1].focus();
   },
   close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; },
-  act(i) { const f = this.cb[i]; this.cb = []; this.close(); if (f) f(); },
+  // ボタンを押したとき、モーダルの中の入力欄(name 付き)の値をまとめて渡す
+  act(i) {
+    const f = this.cb[i], vals = {};
+    document.querySelectorAll('#modal-root [name]').forEach((x) => { vals[x.name] = x.value; });
+    this.cb = []; this.close(); if (f) f(vals);
+  },
 };
 
 /* ---------- 業務マニュアル ---------- */
@@ -2369,7 +2438,7 @@ const Hud = {
   topbar() {
     const d = Game.day, s = Store.data;
     return `<header class="topbar">
-      <div class="brand">${Art.logo()}<div><b>${DATA.airline.name}</b><small>${DATA.home.full} 旅客サービス</small></div></div>
+      <div class="brand">${Art.logo()}<div><b>${DATA.airline.name}</b><small>${Cloud.name() ? `担当 ${U.esc(Cloud.name())}` : `${DATA.home.full} 旅客サービス`}</small></div></div>
       <div class="tb-stats">
         <div class="stat"><small>勤務</small><b>${d.n}日目</b></div>
         <div class="stat st-rank"><small>ランク</small><b class="rk">${Game.rank().name}</b></div>
@@ -2554,6 +2623,7 @@ const Game = {
     document.addEventListener('keydown', (e) => this.onKey(e));
     document.addEventListener('visibilitychange', () => { if (document.hidden && this.scene && this.scene.timed) this.setPause(true); });
     this.go('title');
+    Cloud.init();
     requestAnimationFrame((t) => this.loop(t));
   },
 
@@ -2596,6 +2666,17 @@ const Game = {
     if (a === 'manual') { Manual.open ? Manual.hide() : Manual.show(); }
     else if (a === 'manual-close') Manual.hide();
     else if (a === 'pause') this.setPause(!this.paused);
+    else if (a === 'login') Cloud.login();
+    else if (a === 'ranking') Cloud.showRanking();
+    else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
+    else if (a === 'rename') Cloud.askName(false);
+    else if (a === 'logout') {
+      Modal.show({
+        title: 'ログアウトしますか？',
+        body: '<p>ログアウトすると、<b>この端末の記録は最初の状態に戻ります</b>。記録はクラウドに残っているので、もう一度ログインすれば続きから遊べます。</p>',
+        actions: [{ label: 'やめる', cls: 'ghost' }, { label: 'ログアウトする', cls: 'danger', run: () => Cloud.logout() }],
+      });
+    }
     else if (a === 'rotate-ok') { const h = document.getElementById('rotate-hint'); if (h) h.hidden = true; }
     else if (a === 'sound') {
       const s = Store.data.settings; s.sound = !s.sound; Store.save();
@@ -2636,6 +2717,214 @@ const Game = {
   nextRank(total = Store.data.total) { return DATA.ranks.find((x) => x.min > total) || null; },
 };
 
+/* ===== 12-cloud.js ===== */
+/* ---------- ログイン(Googleアカウント)・クラウド保存・ランキング ----------
+   Firebase Authentication と Cloud Firestore を使う。FIREBASE_CONFIG が null なら何もしない(今までどおり遊べる)。
+   Firestore のデータ
+     saves/{uid}   : { data: 進み具合, name, updatedAt }        … 本人だけが読み書きできる
+     ranking/{uid} : { name, total, best, day, updatedAt }       … だれでも見られる。書けるのは本人だけ
+   ログインしていない人の記録は、今までどおりこの端末(localStorage)だけに残る */
+const Cloud = {
+  SDK: 'https://www.gstatic.com/firebasejs/13.2.0/',
+  config: (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG) || null,
+  fb: null,            // { auth, db, A: firebase/auth, F: firebase/firestore }
+  user: null,          // { uid, name }
+  status: 'off',       // off / loading / out / in / saving / saved / error
+  NAME_MAX: 10,
+
+  enabled() { return !!(this.config && this.config.apiKey); },
+
+  // Firebase の部品を読み込む(必要になったときに1回だけ)
+  load() {
+    if (this.fb) return Promise.resolve(this.fb);
+    if (!this._loading) {
+      this._loading = Promise.all(['app', 'auth', 'firestore'].map((m) => import(`${this.SDK}firebase-${m}.js`)))
+        .then(([app, A, F]) => {
+          const a = app.initializeApp(this.config);
+          this.fb = { auth: A.getAuth(a), db: F.getFirestore(a), A, F };
+          return this.fb;
+        })
+        .catch((e) => { this._loading = null; throw e; });
+    }
+    return this._loading;
+  },
+
+  async init() {
+    if (!this.enabled()) return;
+    this.status = 'loading'; this.refresh();
+    try { await this.load(); } catch (e) { console.warn(e); this.status = 'error'; this.refresh(); return; }
+    const { auth, A } = this.fb;
+    A.onAuthStateChanged(auth, (u) => { this.onUser(u).catch((e) => { console.warn(e); this.status = 'error'; this.refresh(); }); });
+  },
+
+  // LINE などアプリの中のブラウザでは、Googleがログインを受け付けない
+  inAppBrowser() { return /\bLine\/|FBAN|FBAV|Instagram|MicroMessenger|; wv\)/i.test(navigator.userAgent || ''); },
+
+  async login(force) {
+    if (!this.enabled()) return;
+    if (this.inAppBrowser() && !force) {
+      Modal.show({
+        title: 'このブラウザではログインできないかもしれません',
+        body: '<p>LINEなど、アプリの中で開いたページでは、Googleのログインが使えないことがあります。</p><p>右上などのメニューから<b>「Safariで開く」「ブラウザで開く」</b>を選んで、開き直してください。</p>',
+        actions: [{ label: 'それでも試す', cls: 'ghost', run: () => this.login(true) }, { label: 'わかった', cls: 'primary' }],
+      });
+      return;
+    }
+    try {
+      const { auth, A } = await this.load();
+      const p = new A.GoogleAuthProvider();
+      p.setCustomParameters({ prompt: 'select_account' });
+      await A.signInWithPopup(auth, p);   // 結果は onAuthStateChanged で受け取る
+    } catch (e) {
+      const code = (e && e.code) || '';
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+      const msg = {
+        'auth/popup-blocked': 'ログインの画面がブロックされました。ブラウザの設定で、このサイトのポップアップを許可してください。',
+        'auth/unauthorized-domain': 'このURLはFirebaseで許可されていません(Authentication の「承認済みドメイン」を確認してください)。',
+        'auth/network-request-failed': 'インターネットにつながっていないようです。',
+      }[code] || `ログインできませんでした${code ? `(${code})` : ''}。`;
+      Toast.show(msg, 'bad', 5200);
+    }
+  },
+
+  async logout() {
+    if (!this.fb) return;
+    clearTimeout(this._t);
+    this.user = null; this.status = 'out';     // 先に外して、リセットした記録をクラウドに送らないようにする
+    try { await this.fb.A.signOut(this.fb.auth); } catch (e) { console.warn(e); }
+    Store.reset();
+    this.refresh(true);
+    Toast.show('ログアウトしました。この端末の記録は最初の状態に戻りました', 'info', 4200);
+  },
+
+  async onUser(u) {
+    if (!u) {
+      const was = !!this.user;
+      if (was) { this.user = null; Store.reset(); }
+      this.status = 'out'; this.refresh(was); return;
+    }
+    if (this.user && this.user.uid === u.uid) return;
+    this.user = { uid: u.uid, name: null }; this.status = 'loading'; this.refresh();
+    const { db, F } = this.fb;
+    const snap = await F.getDoc(F.doc(db, 'saves', u.uid));
+    const cloud = snap.exists() ? snap.data() : null;
+    const d = Store.data;
+    // この端末の記録が別のアカウントのものなら混ぜない。ログインしていないときの記録なら、アカウントに引き継ぐ
+    if (d.owner && d.owner !== u.uid) Store.reset();
+    if (cloud && cloud.data) Store.merge(cloud.data);
+    Store.data.owner = u.uid;
+    this.user.name = (cloud && cloud.name) || null;
+    this.status = 'in';
+    if (!this.user.name) this.askName(true);
+    else { Store.save(); Toast.show(`${U.esc(this.user.name)}さん、ログインしました。どの端末でも続きから遊べます`, 'ok', 3600); }
+    this.refresh(true);
+  },
+
+  cleanName(s) {
+    const t = Array.from(String(s || '').replace(/[<>&"'\u0000-\u001f]/g, '').trim()).slice(0, this.NAME_MAX).join('');
+    return t || null;
+  },
+
+  askName(first) {
+    const cur = (this.user && this.user.name) || `スタッフ${U.digits(3)}`;
+    Modal.show({
+      title: first ? 'ランキングに出す名前を決めましょう' : '名前を変える',
+      body: `<p>ランキングやゲームの中で表示される名前です(${this.NAME_MAX}文字まで)。<b>本名ではなく、ニックネーム</b>がおすすめです。あとから変えられます。</p>
+        <input class="name-input" name="name" maxlength="${this.NAME_MAX}" value="${U.esc(cur)}" autocomplete="off" aria-label="表示する名前">`,
+      actions: [...(first ? [] : [{ label: 'やめる', cls: 'ghost' }]), { label: 'この名前にする', cls: 'primary', run: (v) => this.setName((v && v.name) || cur) }],
+    });
+  },
+
+  setName(n) {
+    if (!this.user) return;
+    this.user.name = this.cleanName(n) || this.user.name || `スタッフ${U.digits(3)}`;
+    Store.save();
+    this.refresh(true);
+    Toast.show(`「${U.esc(this.user.name)}」でランキングに参加します`, 'ok', 3000);
+  },
+
+  // 記録をクラウドへ(連続で保存されても1回にまとめる)
+  push() {
+    if (!this.user) return;
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.flush(), 1200);
+    if (this.status !== 'loading') { this.status = 'saving'; this.refresh(); }
+  },
+
+  async flush() {
+    if (!this.user || !this.user.name || !this.fb) return;
+    const { db, F } = this.fb, d = Store.data, uid = this.user.uid, name = this.user.name;
+    try {
+      await F.setDoc(F.doc(db, 'saves', uid), { data: JSON.parse(JSON.stringify(Store.cloudData())), name, updatedAt: F.serverTimestamp() });
+      await F.setDoc(F.doc(db, 'ranking', uid), {
+        name, total: Math.max(0, Math.round(d.total || 0)), best: Math.max(0, Math.round((d.bestDay && d.bestDay.score) || 0)), day: Math.round(d.day || 1), updatedAt: F.serverTimestamp(),
+      });
+      if (this.user && this.user.uid === uid) this.status = 'saved';
+    } catch (e) {
+      console.warn(e); this.status = 'error';
+      clearTimeout(this._retry); this._retry = setTimeout(() => this.push(), 20000);   // しばらくしてからやり直す
+    }
+    this.refresh();
+  },
+
+  /* ===== ランキング ===== */
+  showRanking() {
+    Modal.show({
+      title: 'ランキング',
+      body: `<div class="rk-tabs" role="tablist"><button class="rk-tab" role="tab" data-act="g:rank-total" aria-selected="true">累計の点数</button><button class="rk-tab" role="tab" data-act="g:rank-best" aria-selected="false">1日の最高点</button></div>
+        <ol class="rk-list" id="rklist"><li class="rk-msg">読み込み中…</li></ol>
+        ${this.user ? '' : '<p class="small mute">ログインすると、あなたの記録もランキングにのります。</p>'}`,
+      actions: [{ label: '閉じる', cls: 'primary' }],
+    });
+    this.loadRanking('total');
+  },
+
+  async loadRanking(kind) {
+    document.querySelectorAll('.rk-tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.act === `g:rank-${kind}`)));
+    const el = () => document.getElementById('rklist');
+    if (el()) el().innerHTML = '<li class="rk-msg">読み込み中…</li>';
+    try {
+      const { db, F } = await this.load();
+      const snap = await F.getDocs(F.query(F.collection(db, 'ranking'), F.orderBy(kind, 'desc'), F.limit(30)));
+      const rows = []; snap.forEach((doc) => rows.push({ uid: doc.id, ...doc.data() }));
+      if (!el()) return;
+      el().innerHTML = rows.length ? rows.map((r, i) => `<li class="${this.user && r.uid === this.user.uid ? 'me' : ''}">
+          <span class="rk-no">${i + 1}</span><span class="rk-name">${U.esc(r.name || '名無し')}${this.user && r.uid === this.user.uid ? ' <em>あなた</em>' : ''}</span>
+          <span class="rk-day">${r.day || 1}日目</span><b class="rk-val">${U.fmt(r[kind] || 0)}<small>点</small></b></li>`).join('')
+        : '<li class="rk-msg">まだだれもいません。1日目をクリアすると、ここにのります。</li>';
+    } catch (e) {
+      console.warn(e);
+      if (el()) el().innerHTML = '<li class="rk-msg">ランキングを読み込めませんでした。インターネットにつながっているか確かめてください。</li>';
+    }
+  },
+
+  /* ===== 表示 ===== */
+  name() { return this.user && this.user.name ? this.user.name : ''; },
+
+  // タイトル画面の「アカウント」欄
+  boxHTML() {
+    if (!this.enabled()) return '';
+    const st = { loading: 'ログインを確認中…', saving: '保存中…', saved: 'クラウドに保存済み', in: 'クラウドに保存済み', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || '';
+    if (this.status === 'error' && !this.fb) return '<div class="acct" id="acct"><p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p></div>';
+    if (this.user) {
+      return `<div class="acct in" id="acct"><div class="acct-who"><span class="acct-ic" aria-hidden="true">☁</span><div><b>${U.esc(this.user.name || '…')}</b>さん<small class="${this.status === 'error' ? 'bad' : ''}">${st}</small></div></div>
+        <div class="acct-btns"><button class="btn small" data-act="g:ranking">ランキング</button><button class="btn small ghost" data-act="g:rename">名前を変える</button><button class="btn small ghost" data-act="g:logout">ログアウト</button></div></div>`;
+    }
+    if (this.status === 'loading') return `<div class="acct" id="acct"><p class="small mute">${st}</p></div>`;
+    return `<div class="acct" id="acct"><p>ログインすると、<b>どの端末でも続きから</b>遊べて、<b>ランキング</b>にも参加できます。</p>
+      <div class="acct-btns"><button class="btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>Googleでログイン</button><button class="btn small" data-act="g:ranking">ランキングを見る</button></div></div>`;
+  },
+
+  // 状態が変わったら、タイトル画面なら描き直す(記録が変わったときは画面ごと)
+  refresh(all) {
+    if (typeof Game === 'undefined' || Game.scene !== Scenes.title) return;
+    if (all && !Modal.open) { Scenes.title.enter(); return; }
+    const box = document.getElementById('acct');
+    if (box) box.outerHTML = this.boxHTML();
+    const ver = document.getElementById('tver'); if (ver) ver.textContent = Scenes.title.verText();
+  },
+};
+
 /* ===== 20-title.js ===== */
 /* ---------- タイトル ---------- */
 Scenes.title = {
@@ -2663,6 +2952,7 @@ Scenes.title = {
           <li><b>搭乗ゲート</b><span>グループ順に案内し、別の便のお客様を見抜く</span></li>
         </ol>
         <div class="t-status"><span>${s.day}日目</span><span>${r.name}</span><span>累計 ${U.fmt(s.total)}点</span><span>メダル ${Goals.medalCount()}個</span>${s.bestDay ? `<span>1日の最高 ${U.fmt(s.bestDay.score)}点</span>` : ''}</div>
+        ${Cloud.boxHTML()}
         ${(() => { const nu = Progress.nextUnlock(s.total); return nu ? `<p class="t-hint">次の昇進「${nu.name}」(あと${U.fmt(nu.min - s.total)}点)で、新しい仕事<b>「${DATA.jobs[nu.unlock].name}」</b>が加わります。</p>` : ''; })()}
         <div class="t-actions">
           <button class="btn primary big" data-act="start">${first ? '勤務を始める' : `${s.day}日目の勤務へ`}</button>
@@ -2677,12 +2967,13 @@ Scenes.title = {
           <button class="btn ghost small" data-act="speech" aria-pressed="${s.settings.speech}">アナウンス読み上げ: ${s.settings.speech ? 'ON' : 'OFF'}</button>
           ${first ? '' : '<button class="btn ghost small" data-act="reset">最初からやり直す</button>'}
         </div>
-        <p class="t-ver">v${CONFIG.version} · 進み具合はこのブラウザに保存されます</p>
+        <p class="t-ver" id="tver">${this.verText()}</p>
       </section>
     </div>`;
     Flap.run(document.getElementById('tboard'));
     const row = document.getElementById('tdays'); if (row) row.scrollLeft = row.scrollWidth;   // 最近の日が見えるように
   },
+  verText() { return `v${CONFIG.version} · ${Cloud.user ? '進み具合はクラウドにも保存されます' : '進み具合はこのブラウザに保存されます'}`; },
   onAct(a, ds) {
     if (a === 'start') Game.startDay(Store.data.day);
     else if (a === 'pick') { const n = +ds.n; if (n >= 1 && n < Store.data.day) Game.startDay(n); }   // クリアした日だけ
@@ -2710,7 +3001,7 @@ Scenes.briefing = {
       : '<p class="mute">新しいルールはありません。これまでのルールをすべて使います。</p>';
     document.getElementById('app').innerHTML = Hud.frame(`<div class="brief">
       <section class="panel b-main">
-        <p class="eyebrow">本日の勤務 · ${U.jp(d.date)}</p>
+        <p class="eyebrow">本日の勤務 · ${U.jp(d.date)}${Cloud.name() ? ` · 担当 ${U.esc(Cloud.name())}` : ''}</p>
         ${d.event ? `<div class="ev-banner"><small>特別な日 SPECIAL DAY</small><b>${DATA.events[d.event].name}</b></div>` : ''}
         <h2>${d.cfg.title}</h2>
         <p class="b-lede">${d.cfg.brief}</p>
@@ -4462,7 +4753,7 @@ Scenes.result = {
       <div class="r-left">
         <section class="panel r-head">
           <div class="r-stars" aria-label="星${stars}つ">${[1, 2, 3].map((i) => Art.star(i <= stars)).join('')}</div>
-          <div class="r-title"><p class="eyebrow">${U.jp(d.date)} · ${d.cfg.title}</p><h2>${verdict}</h2>
+          <div class="r-title"><p class="eyebrow">${U.jp(d.date)} · ${d.cfg.title}${Cloud.name() ? ` · ${U.esc(Cloud.name())}さん` : ''}</p><h2>${verdict}</h2>
             ${d.recordBest ? '<span class="pill ok">1日の最高記録を更新！</span>' : d.newBest ? '<span class="pill ok">この日の自己ベスト</span>' : ''}</div>
           <div class="r-score"><small>本日のスコア</small><b>${U.fmt(score)}</b></div>
         </section>
@@ -4485,6 +4776,7 @@ Scenes.result = {
           <button class="btn primary big" data-act="next">${d.n + 1}日目の勤務へ</button>
           <button class="btn" data-act="retry">この日をやり直す</button>
           <button class="btn ghost" data-act="title">タイトルへ</button>
+          ${Cloud.user ? '<button class="btn ghost" data-act="g:ranking">ランキング</button>' : ''}
         </div>
       </div>
       <div class="panel r-logs">

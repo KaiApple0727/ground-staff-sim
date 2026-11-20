@@ -12,6 +12,7 @@ const Game = {
     document.addEventListener('keydown', (e) => this.onKey(e));
     document.addEventListener('visibilitychange', () => { if (document.hidden && this.scene && this.scene.timed) this.setPause(true); });
     this.go('title');
+    Cloud.init();
     requestAnimationFrame((t) => this.loop(t));
   },
 
@@ -54,6 +55,17 @@ const Game = {
     if (a === 'manual') { Manual.open ? Manual.hide() : Manual.show(); }
     else if (a === 'manual-close') Manual.hide();
     else if (a === 'pause') this.setPause(!this.paused);
+    else if (a === 'login') Cloud.login();
+    else if (a === 'ranking') Cloud.showRanking();
+    else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
+    else if (a === 'rename') Cloud.askName(false);
+    else if (a === 'logout') {
+      Modal.show({
+        title: 'ログアウトしますか?',
+        body: '<p>ログアウトすると、<b>この端末の記録は最初の状態に戻ります</b>。記録はクラウドに残っているので、もう一度ログインすれば続きから遊べます。</p>',
+        actions: [{ label: 'やめる', cls: 'ghost' }, { label: 'ログアウトする', cls: 'danger', run: () => Cloud.logout() }],
+      });
+    }
     else if (a === 'rotate-ok') { const h = document.getElementById('rotate-hint'); if (h) h.hidden = true; }
     else if (a === 'sound') {
       const s = Store.data.settings; s.sound = !s.sound; Store.save();

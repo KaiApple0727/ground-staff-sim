@@ -24,6 +24,7 @@ Scenes.title = {
           <li><b>搭乗ゲート</b><span>グループ順に案内し、別の便のお客様を見抜く</span></li>
         </ol>
         <div class="t-status"><span>${s.day}日目</span><span>${r.name}</span><span>累計 ${U.fmt(s.total)}点</span><span>メダル ${Goals.medalCount()}個</span>${s.bestDay ? `<span>1日の最高 ${U.fmt(s.bestDay.score)}点</span>` : ''}</div>
+        ${Cloud.boxHTML()}
         ${(() => { const nu = Progress.nextUnlock(s.total); return nu ? `<p class="t-hint">次の昇進「${nu.name}」(あと${U.fmt(nu.min - s.total)}点)で、新しい仕事<b>「${DATA.jobs[nu.unlock].name}」</b>が加わります。</p>` : ''; })()}
         <div class="t-actions">
           <button class="btn primary big" data-act="start">${first ? '勤務を始める' : `${s.day}日目の勤務へ`}</button>
@@ -38,12 +39,13 @@ Scenes.title = {
           <button class="btn ghost small" data-act="speech" aria-pressed="${s.settings.speech}">アナウンス読み上げ: ${s.settings.speech ? 'ON' : 'OFF'}</button>
           ${first ? '' : '<button class="btn ghost small" data-act="reset">最初からやり直す</button>'}
         </div>
-        <p class="t-ver">v${CONFIG.version} · 進み具合はこのブラウザに保存されます</p>
+        <p class="t-ver" id="tver">${this.verText()}</p>
       </section>
     </div>`;
     Flap.run(document.getElementById('tboard'));
     const row = document.getElementById('tdays'); if (row) row.scrollLeft = row.scrollWidth;   // 最近の日が見えるように
   },
+  verText() { return `v${CONFIG.version} · ${Cloud.user ? '進み具合はクラウドにも保存されます' : '進み具合はこのブラウザに保存されます'}`; },
   onAct(a, ds) {
     if (a === 'start') Game.startDay(Store.data.day);
     else if (a === 'pick') { const n = +ds.n; if (n >= 1 && n < Store.data.day) Game.startDay(n); }   // クリアした日だけ
@@ -71,7 +73,7 @@ Scenes.briefing = {
       : '<p class="mute">新しいルールはありません。これまでのルールをすべて使います。</p>';
     document.getElementById('app').innerHTML = Hud.frame(`<div class="brief">
       <section class="panel b-main">
-        <p class="eyebrow">本日の勤務 · ${U.jp(d.date)}</p>
+        <p class="eyebrow">本日の勤務 · ${U.jp(d.date)}${Cloud.name() ? ` · 担当 ${U.esc(Cloud.name())}` : ''}</p>
         ${d.event ? `<div class="ev-banner"><small>特別な日 SPECIAL DAY</small><b>${DATA.events[d.event].name}</b></div>` : ''}
         <h2>${d.cfg.title}</h2>
         <p class="b-lede">${d.cfg.brief}</p>
