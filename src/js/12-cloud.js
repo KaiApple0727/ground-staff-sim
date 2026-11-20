@@ -150,14 +150,13 @@ const Cloud = {
       const icon = UIcon.valid(this.user.icon) ? this.user.icon : null;
       await F.setDoc(F.doc(db, 'saves', uid), { data: JSON.parse(JSON.stringify(Store.cloudData())), name, ...(icon ? { icon } : {}), updatedAt: F.serverTimestamp() });
       const row = { name, total: Math.max(0, Math.round(d.total || 0)), best: Math.max(0, Math.round((d.bestDay && d.bestDay.score) || 0)), day: Math.round(d.day || 1), updatedAt: F.serverTimestamp() };
-      try { await F.setDoc(F.doc(db, 'ranking', uid), icon ? { ...row, icon } : row); this.oldRules = false; }
-      catch (e) {
-        // Firestore のルールが古い(icon を受け付けない)ときは、アイコンなしでランキングだけ更新する
-        if (!icon || (e && e.code) !== 'permission-denied') throw e;
-        await F.setDoc(F.doc(db, 'ranking', uid), row);
-        if (!this.oldRules) Toast.show('アイコンをランキングに出すには、Firestore のルールの更新が必要です', 'info', 5000);
-        this.oldRules = true;
+      // Firestore のルールが古いと、icon や pub(公開する記録)を受け付けない。そのときは項目を減らしてランキングだけでも更新する
+      const tries = [{ ...row, ...(icon ? { icon } : {}), pub: this.pubStats() }, ...(icon ? [{ ...row, icon }] : []), row];
+      for (let i = 0; i < tries.length; i++) {
+        try { await F.setDoc(F.doc(db, 'ranking', uid), tries[i]); this.oldRules = i > 0; break; }
+        catch (e) { if ((e && e.code) !== 'permission-denied' || i === tries.length - 1) throw e; }
       }
+      if (this.oldRules && !this._ruleWarned) { this._ruleWarned = true; Toast.show('アイコンや記録をランキングに出すには、Firestore のルールの更新が必要です', 'info', 5000); }
       if (this.user && this.user.uid === uid) this.status = 'saved';
     } catch (e) {
       console.warn(e); this.status = 'error';
@@ -203,7 +202,7 @@ const Cloud = {
         ${jobs.length ? `<h3 class="pf-h">仕事ごと</h3><table class="pf-jobs"><tr><th>仕事</th><th>担当した日</th><th>対応</th><th>正解率</th></tr>
           ${jobs.map((j) => { const x = st.jobs[j]; return `<tr><td>${DATA.jobs[j].name}</td><td>${x.days}日</td><td>${x.n}件</td><td>${pct(x.ok, x.n)}</td></tr>`; }).join('')}</table>` : ''}
         ${bests.length ? `<h3 class="pf-h">日ごとの最高点</h3><div class="pf-bars" role="img" aria-label="日ごとの最高点のグラフ">${bests.map((b) => `<div class="pf-bar" title="${b.n}日目 ${U.fmt(b.score)}点"><i style="height:${Math.max(3, (Math.max(0, b.score) / max) * 100)}%"></i><span>${b.n}</span></div>`).join('')}</div>` : ''}
-        ${this.oldRules ? '<p class="small warn-note">アイコンをランキングに出すには、Firestore のルールの更新が必要です。</p>' : ''}`,
+        ${this.oldRules ? '<p class="small warn-note">アイコンや記録をランキングに出すには、Firestore のルールの更新が必要です。</p>' : ''}`,
       actions: [{ label: 'アイコンを変える', cls: 'ghost', run: () => this.showIconPicker() }, { label: '名前を変える', cls: 'ghost', run: () => this.askName(false) }, { label: 'ログアウト', cls: 'ghost', run: () => Game.globalAct('logout') }, { label: '閉じる', cls: 'primary' }],
     });
   },
@@ -271,15 +270,56 @@ const Cloud = {
   },
 
   /* ===== ランキング ===== */
-  showRanking() {
+  showRanking(kind = 'total') {
     Modal.show({
       title: 'ランキング',
-      body: `<div class="rk-tabs" role="tablist"><button class="rk-tab" role="tab" data-act="g:rank-total" aria-selected="true">累計の点数</button><button class="rk-tab" role="tab" data-act="g:rank-best" aria-selected="false">1日の最高点</button></div>
+      body: `<div class="rk-tabs" role="tablist"><button class="rk-tab" role="tab" data-act="g:rank-total" aria-selected="${kind === 'total'}">累計の点数</button><button class="rk-tab" role="tab" data-act="g:rank-best" aria-selected="${kind === 'best'}">1日の最高点</button></div>
         <ol class="rk-list" id="rklist"><li class="rk-msg">読み込み中…</li></ol>
-        ${this.user ? '' : '<p class="small mute">ログインすると、あなたの記録もランキングにのります。</p>'}`,
+        <p class="small mute">${this.user ? '' : 'ログインすると、あなたの記録もランキングにのります。'}アイコンか名前を押すと、その人のプロフィールが見られます。</p>`,
       actions: [{ label: '閉じる', cls: 'primary' }],
     });
-    this.loadRanking('total');
+    this.loadRanking(kind);
+  },
+
+  // ランキングで公開する記録(くわしい統計は本人だけが見られる場所にある)
+  pubStats() {
+    const s = Store.data, st = s.stats || {};
+    const stars = Object.values(s.best).reduce((x, b) => x + (b.stars || 0), 0);
+    const n = (v) => Math.max(0, Math.round(v || 0));
+    return { medals: n(Goals.medalCount()), stars: n(stars), stars3: n(st.stars3), shifts: n(st.shifts), acc: st.dec ? n((st.good / st.dec) * 100) : -1, combo: n(st.maxCombo), onTime: n(st.onTime), pax: n((st.counterPax || 0) + (st.boarded || 0)) };
+  },
+
+  tile(label, val, sub) { return `<div class="pf-tile"><small>${label}</small><b>${val}</b>${sub ? `<span>${sub}</span>` : ''}</div>`; },
+
+  // ほかの人のプロフィール(ランキングのアイコン・名前から)
+  showUser(uid) {
+    const r = (this._rows || []).find((x) => x.uid === uid); if (!r) return;
+    if (this.user && uid === this.user.uid) { this.showProfile(); return; }
+    const n = (v) => (Number.isFinite(+v) ? Math.max(0, Math.round(+v)) : 0);
+    const p = r.pub && typeof r.pub === 'object' ? r.pub : null, total = n(r.total), day = Math.max(1, n(r.day));
+    const rank = Game.rank(total);
+    Modal.show({
+      title: 'プロフィール',
+      wide: true,
+      body: `<div class="pf-head">${UIcon.html(UIcon.valid(r.icon) ? r.icon : UIcon.DEF, 'lg')}
+          <div class="pf-who"><b>${U.esc(r.name || '名無し')}</b>さん</div>
+          <div class="pf-rank"><small>ランク</small><b>${rank.name}</b></div></div>
+        <h3 class="pf-h">これまでの記録</h3>
+        <div class="pf-grid">
+          ${this.tile('進んだ日', `${day - 1}<small>日目までクリア</small>`)}
+          ${this.tile('累計の点数', `${U.fmt(total)}<small>点</small>`)}
+          ${this.tile('1日の最高点', `${U.fmt(n(r.best))}<small>点</small>`)}
+          ${p ? `${this.tile('メダル', `${n(p.medals)}<small>個</small>`)}
+            ${this.tile('★の数', `${n(p.stars)}<small>個</small>`, `★3つの勤務 ${n(p.stars3)}回`)}
+            ${this.tile('勤務した回数', `${n(p.shifts)}<small>回</small>`)}
+            ${this.tile('判断の正確さ', +p.acc >= 0 ? `${n(p.acc)}%` : '—')}
+            ${this.tile('最大コンボ', `${n(p.combo)}`)}
+            ${this.tile('定刻出発', `${n(p.onTime)}<small>回</small>`)}
+            ${this.tile('対応したお客様', `${U.fmt(n(p.pax))}<small>人</small>`)}` : ''}
+        </div>
+        ${p ? '' : '<p class="small mute">くわしい記録は、この人が次に遊んだあとに表示されます。</p>'}`,
+      actions: [{ label: 'ランキングにもどる', cls: 'ghost', run: () => this.showRanking(this._rkKind) }, { label: '閉じる', cls: 'primary' }],
+    });
   },
 
   async loadRanking(kind) {
@@ -290,9 +330,10 @@ const Cloud = {
       const { db, F } = await this.load();
       const snap = await F.getDocs(F.query(F.collection(db, 'ranking'), F.orderBy(kind, 'desc'), F.limit(30)));
       const rows = []; snap.forEach((doc) => rows.push({ uid: doc.id, ...doc.data() }));
+      this._rows = rows; this._rkKind = kind;
       if (!el()) return;
       el().innerHTML = rows.length ? rows.map((r, i) => `<li class="${this.user && r.uid === this.user.uid ? 'me' : ''}">
-          <span class="rk-no">${i + 1}</span>${UIcon.html(this.user && r.uid === this.user.uid ? this.user.icon : UIcon.valid(r.icon) ? r.icon : UIcon.DEF, 'sm')}<span class="rk-name">${U.esc(r.name || '名無し')}${this.user && r.uid === this.user.uid ? ' <em>あなた</em>' : ''}</span>
+          <span class="rk-no">${i + 1}</span><button class="rk-who" data-act="g:rank-user" data-uid="${U.esc(r.uid)}" aria-label="${U.esc(r.name || '名無し')}さんのプロフィール">${UIcon.html(this.user && r.uid === this.user.uid ? this.user.icon : UIcon.valid(r.icon) ? r.icon : UIcon.DEF, 'sm')}<span class="rk-name">${U.esc(r.name || '名無し')}${this.user && r.uid === this.user.uid ? ' <em>あなた</em>' : ''}</span></button>
           <span class="rk-day">${r.day || 1}日目</span><b class="rk-val">${U.fmt(r[kind] || 0)}<small>点</small></b></li>`).join('')
         : '<li class="rk-msg">まだだれもいません。1日目をクリアすると、ここにのります。</li>';
     } catch (e) {

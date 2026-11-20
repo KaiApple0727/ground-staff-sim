@@ -60,6 +60,7 @@ const Game = {
     else if (a === 'acct-hide') { Store.data.settings.hideAcct = true; Store.save(); Cloud.refresh(); Toast.show('案内を閉じました。ログインは右上のボタンからできます', 'info', 3200); }
     else if (a === 'ranking') Cloud.showRanking();
     else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
+    else if (a === 'rank-user') Cloud.showUser(ds.uid);
     else if (a === 'rename') Cloud.askName(false);
     else if (a === 'profile') Cloud.showProfile();
     else if (a === 'icon') Cloud.showIconPicker();

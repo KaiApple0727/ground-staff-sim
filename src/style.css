@@ -1005,7 +1005,10 @@ body.phone .modal { padding: 16px; }
 .ic-opt .uicon { width: 100%; height: auto; aspect-ratio: 1; max-width: 52px; }
 .ic-opt.sel { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(43, 79, 181, .25); }
 .warn-note { color: var(--warn); margin-top: 8px; }
-.rk-list li { grid-template-columns: 30px 26px minmax(0, 1fr) auto auto; }
+.rk-list li { grid-template-columns: 30px minmax(0, 1fr) auto auto; }
+.rk-who { display: flex; align-items: center; gap: 8px; min-width: 0; border: none; background: none; padding: 2px 4px; margin: -2px -4px; border-radius: 8px; cursor: pointer; font: inherit; color: inherit; text-align: left; }
+.rk-who:hover { background: #eef2fb; }
+.rk-who:hover .rk-name { text-decoration: underline; }
 body.phone .ic-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 body.phone .uicon.xl { width: 76px; height: 76px; }
 /* 画像の切り取り */
