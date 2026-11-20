@@ -1097,7 +1097,7 @@ const CHANGELOG = [
       'ランキングやプロフィールは、外側を押すと閉じる',
       '勤務前の説明で、新しい仕事のルールと今日から加わるルールを分けて表示',
       'アップデート履歴を追加',
-      'タイトルの勤務日に、次の日と、まだ遊べない日(カギ付き)も表示',
+      'タイトルの勤務日に、次の日と、まだ遊べない日(カギ付き、30日目まで)も表示',
     ],
   },
   {
@@ -3736,7 +3736,7 @@ Scenes.title = {
           <button class="btn" data-act="g:manual">業務マニュアル</button>
         </div>
         <div class="t-days" role="group" aria-label="勤務日をえらぶ"><small>${s.day > 1 ? 'クリアした日は、もう一度遊べます(★はその日の最高評価)' : '勤務日(クリアすると次の日が遊べます)'}</small>
-          <div class="t-days-row" id="tdays">${Array.from({ length: s.day + 3 }, (_, i) => i + 1).map((n) => {
+          <div class="t-days-row" id="tdays">${Array.from({ length: Math.max(30, s.day + 10) }, (_, i) => i + 1).map((n) => {
             const b = s.best[n], ev = Progress.eventFor(n), tag = ev ? '<i>特</i>' : '', name = `${n}日目${ev ? ' ' + DATA.events[ev].name : ''}`;
             if (n < s.day) return `<button class="btn small dayb" data-act="pick" data-n="${n}" title="${name}">${n}${tag}<span class="st">${b ? '★'.repeat(b.stars) : '—'}</span></button>`;
             if (n === s.day) return `<button class="btn small dayb cur" data-act="start" title="${name}(次の勤務)">${n}${tag}<span class="st now">つぎ</span></button>`;
@@ -3751,9 +3751,9 @@ Scenes.title = {
       </section>
     </div>`;
     Flap.run(document.getElementById('tboard'));
-    // 次の勤務日が見えるように(その先のまだ遊べない日も少し見える位置)
+    // 勤務日は30日目まで(進んだら、その10日先まで)並べる。次の勤務日が見える位置までスクロール
     const row = document.getElementById('tdays'), cur = row && row.querySelector('.dayb.cur');
-    if (row && cur) row.scrollLeft = Math.max(0, cur.offsetLeft + cur.offsetWidth * 4 - row.clientWidth);
+    if (row && cur) row.scrollLeft = Math.max(0, cur.offsetLeft - cur.offsetWidth * 3);   // 前の日を少し見せて、その先を右に
   },
   lock() { return '<svg class="lock" viewBox="0 0 16 18" aria-hidden="true"><path d="M4.5 8V5.5a3.5 3.5 0 0 1 7 0V8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="2" y="8" width="12" height="9" rx="2" fill="currentColor"/><circle cx="8" cy="12.5" r="1.5" fill="#c9ced3"/></svg>'; },
   verText() { return `v${CONFIG.version} · ${Cloud.user ? '進み具合はクラウドにも保存されます' : '進み具合はこのブラウザに保存されます'}`; },
