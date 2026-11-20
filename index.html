@@ -1053,6 +1053,17 @@ body.phone .uicon.xl { width: 76px; height: 76px; }
 .pf-guest { margin-top: 10px; background: #fff7e6; border: 1px solid #f0c674; border-radius: 10px; padding: 8px 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 13px; }
 .pf-guest p { margin: 0; flex: 1 1 260px; }
 .acct-btns small { font-size: 11px; }
+/* アップデート履歴 */
+.new-dot { margin-left: 6px; background: var(--bad); color: #fff; font-size: 9.5px; font-weight: 700; border-radius: 999px; padding: 1px 6px; vertical-align: 1px; }
+.cl-list { display: grid; gap: 6px; max-height: min(60vh, 460px); overflow: auto; }
+.cl-item { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+.cl-item summary { cursor: pointer; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; list-style: none; }
+.cl-item summary::-webkit-details-marker { display: none; }
+.cl-item summary::before { content: '▸'; color: var(--mute); width: 10px; }
+.cl-item[open] summary::before { content: '▾'; }
+.cl-v { font-family: var(--f-mono); font-weight: 700; color: var(--brand); }
+.cl-item summary small { color: var(--mute); font-size: 11.5px; }
+.cl-item ul { margin: 6px 0 2px; padding-left: 22px; font-size: 13px; display: grid; gap: 3px; }
 
 </style>
 </head>
@@ -1064,10 +1075,69 @@ body.phone .uicon.xl { width: 76px; height: 76px; }
 <div id="manual-root"></div>
 <div id="modal-root"></div>
 <script>
+/* ===== 00-changelog.js ===== */
+/* ---------- アップデート履歴(新しいものを上に足していく) ----------
+   v: バージョン(00-config.js の CONFIG.version と合わせる) / date: 公開した日(わからないものは空) / items: 変わったこと */
+const CHANGELOG = [
+  {
+    v: '0.6.0', date: '2026-11-20', title: 'アカウントとランキング',
+    items: [
+      'Google・メールアドレス・ゲストでログインできるように。Googleかメールアドレスなら、どの端末でも続きから遊べる',
+      'ゲストの記録は、あとからGoogleやメールアドレスのアカウントに引き継げる',
+      'ランキング(累計の点数・1日の最高点)。アイコンか名前を押すと、その人のプロフィールが見られる',
+      'プロフィールに「これまでの統計」(正確さ・最大コンボ・対応したお客様の人数・仕事ごとの正解率・日ごとの最高点のグラフなど)',
+      '自分のアイコンを変えられるように(12種類の絵か、好きな画像。画像は使う範囲も決められる)',
+      'ランキングやプロフィールは、外側を押すと閉じる',
+      '勤務前の説明で、新しい仕事のルールと今日から加わるルールを分けて表示',
+      'アップデート履歴を追加',
+    ],
+  },
+  {
+    v: '0.5.0', date: '2026-11-20', title: '新しい仕事',
+    items: [
+      'チェックインカウンターに、機内持ち込み手荷物のサイズチェック(3日目から)',
+      '新しい仕事「予約カウンター」(累計1,500点で加わる)',
+      '新しい仕事「忘れ物センター」(累計5,000点で加わる)',
+      '解放された仕事は、日替わりで入れ替わる',
+    ],
+  },
+  {
+    v: '0.4.0', date: '2026-11-19', title: 'スマホで遊べるように',
+    items: [
+      'スマホ・iPadの縦向きで遊べる画面',
+      'ground-staff-sim.onrender.com で公開',
+    ],
+  },
+  {
+    v: '0.3.0', date: '', title: '長く遊べるように',
+    items: [
+      '9日目から、3日ごとに特別な日(修学旅行・台風接近・年末年始の大混雑・海外からのお客様の日)',
+      '昇進すると新しい仕事(ラウンジ受付・手荷物の仕分け)',
+      '毎日の目標とメダル、コンボ',
+      'タイトル画面から、クリアした日をもう一度遊べる',
+    ],
+  },
+  {
+    v: '0.2.0', date: '', title: 'もっと本物らしく',
+    items: [
+      'パスポートの写真・残り期間、ESTA、非常口座席などの確認',
+      'サポートが必要なお客様(車いす・ひとり旅のお子さま・ペット・楽器・赤ちゃん連れ)',
+      '欠航と振替、乗り継ぎ、搭乗口の変更・機材の変更・オーバーブッキング',
+    ],
+  },
+  {
+    v: '0.1.0', date: '', title: 'はじめての公開',
+    items: [
+      'チェックインカウンターと搭乗ゲートの仕事(1〜8日目)',
+      'iPadの横向きで1画面に収まり、待ち時間が少ない作り',
+    ],
+  },
+];
+
 /* ===== 00-config.js ===== */
 'use strict';
 /* =====================================================================
-   グランドスタッフシミュレーター  v0.5
+   グランドスタッフシミュレーター  v0.6
    ---------------------------------------------------------------------
    拡張の入口(大きくするときはここから)
    - 新しいトラブル      → 03-rules.js の ISSUES に1つ追加
@@ -1077,7 +1147,7 @@ body.phone .uicon.xl { width: 76px; height: 76px; }
    - 新しい業務(シーン)  → Scenes.xxx = { enter, update, onAct } を作り Game.go('xxx')
    ===================================================================== */
 const CONFIG = {
-  version: '0.5.0',
+  version: '0.6.0',
   saveKey: 'gss-save-v1',
   startDate: '2026-12-01',   // 勤務1日目の日付
   gateSpeed: 6,              // 搭乗ゲートの時間の速さ(実時間1秒 = ゲーム内6秒)
@@ -2847,6 +2917,7 @@ const Game = {
     else if (a === 'rename') Cloud.askName(false);
     else if (a === 'profile') Cloud.showProfile();
     else if (a === 'icon') Cloud.showIconPicker();
+    else if (a === 'changelog') this.showChangelog();
     else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'icon-crop') Cloud.showCropper();
     else if (a === 'logout') {
@@ -2865,6 +2936,19 @@ const Game = {
       const s = Store.data.settings; s.sound = !s.sound; Store.save();
       const b = document.getElementById('soundBtn'); if (b) { (b.querySelector('.tx') || b).textContent = s.sound ? '音 ON' : '音 OFF'; b.setAttribute('aria-pressed', s.sound); }
     }
+  },
+
+  // アップデート履歴(開いたら、今のバージョンは見たことにする)
+  showChangelog() {
+    Modal.show({ soft: true, wide: true,
+      title: 'アップデート履歴',
+      body: `<div class="cl-list">${CHANGELOG.map((c, i) => `<details class="cl-item" ${i === 0 ? 'open' : ''}>
+          <summary><span class="cl-v">v${c.v}</span><b>${c.title}</b>${c.date ? `<small>${c.date.replace(/-/g, '/')}</small>` : ''}${c.v === CONFIG.version ? '<span class="pill ok">いまのバージョン</span>' : ''}</summary>
+          <ul>${c.items.map((t) => `<li>${t}</li>`).join('')}</ul></details>`).join('')}</div>`,
+      actions: [{ label: '閉じる', cls: 'primary' }],
+    });
+    const st = Store.data.settings;
+    if (st.seenVer !== CONFIG.version) { st.seenVer = CONFIG.version; Store.saveLocal(); const d = document.querySelector('.new-dot'); if (d) d.remove(); }
   },
 
   setPause(v) {
@@ -3650,6 +3734,7 @@ Scenes.title = {
           }).join('')}</div></div>` : ''}
         <div class="t-opts">
           <button class="btn ghost small" data-act="speech" aria-pressed="${s.settings.speech}">アナウンス読み上げ: ${s.settings.speech ? 'ON' : 'OFF'}</button>
+          <button class="btn ghost small" data-act="g:changelog">アップデート履歴${!first && s.settings.seenVer !== CONFIG.version ? '<span class="new-dot">NEW</span>' : ''}</button>
           ${first ? '' : '<button class="btn ghost small" data-act="reset">最初からやり直す</button>'}
         </div>
         <p class="t-ver" id="tver">${this.verText()}</p>

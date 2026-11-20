@@ -72,6 +72,7 @@ const Game = {
     else if (a === 'rename') Cloud.askName(false);
     else if (a === 'profile') Cloud.showProfile();
     else if (a === 'icon') Cloud.showIconPicker();
+    else if (a === 'changelog') this.showChangelog();
     else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'icon-crop') Cloud.showCropper();
     else if (a === 'logout') {
@@ -90,6 +91,19 @@ const Game = {
       const s = Store.data.settings; s.sound = !s.sound; Store.save();
       const b = document.getElementById('soundBtn'); if (b) { (b.querySelector('.tx') || b).textContent = s.sound ? '音 ON' : '音 OFF'; b.setAttribute('aria-pressed', s.sound); }
     }
+  },
+
+  // アップデート履歴(開いたら、今のバージョンは見たことにする)
+  showChangelog() {
+    Modal.show({ soft: true, wide: true,
+      title: 'アップデート履歴',
+      body: `<div class="cl-list">${CHANGELOG.map((c, i) => `<details class="cl-item" ${i === 0 ? 'open' : ''}>
+          <summary><span class="cl-v">v${c.v}</span><b>${c.title}</b>${c.date ? `<small>${c.date.replace(/-/g, '/')}</small>` : ''}${c.v === CONFIG.version ? '<span class="pill ok">いまのバージョン</span>' : ''}</summary>
+          <ul>${c.items.map((t) => `<li>${t}</li>`).join('')}</ul></details>`).join('')}</div>`,
+      actions: [{ label: '閉じる', cls: 'primary' }],
+    });
+    const st = Store.data.settings;
+    if (st.seenVer !== CONFIG.version) { st.seenVer = CONFIG.version; Store.saveLocal(); const d = document.querySelector('.new-dot'); if (d) d.remove(); }
   },
 
   setPause(v) {

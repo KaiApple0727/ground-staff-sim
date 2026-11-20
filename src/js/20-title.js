@@ -38,6 +38,7 @@ Scenes.title = {
           }).join('')}</div></div>` : ''}
         <div class="t-opts">
           <button class="btn ghost small" data-act="speech" aria-pressed="${s.settings.speech}">アナウンス読み上げ: ${s.settings.speech ? 'ON' : 'OFF'}</button>
+          <button class="btn ghost small" data-act="g:changelog">アップデート履歴${!first && s.settings.seenVer !== CONFIG.version ? '<span class="new-dot">NEW</span>' : ''}</button>
           ${first ? '' : '<button class="btn ghost small" data-act="reset">最初からやり直す</button>'}
         </div>
         <p class="t-ver" id="tver">${this.verText()}</p>
