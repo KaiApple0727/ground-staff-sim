@@ -153,8 +153,20 @@ Scenes.counter = {
     const pp = p.flight.intl
       ? (p.passport ? Docs.passport(p.passport, p.av, p.photoAv) : '<div class="doc missing"><b>パスポートの提示なし</b><small>NO PASSPORT</small></div>')
       : '<div class="doc note"><b>国内線</b><small>パスポートの確認は不要</small></div>';
-    desk.innerHTML = `<div class="docs">${pp}${Docs.ticket(p)}</div><div class="scale-area"><div id="scale"></div>${p.svc === 'minor' ? Docs.minorForm(p) : ''}</div><div class="printed" id="printed"></div>`;
+    desk.innerHTML = `<div class="docs">${pp}${Docs.ticket(p)}</div><div class="scale-area"><div id="scale"></div>${this.carryHTML(p)}${p.svc === 'minor' ? Docs.minorForm(p) : ''}</div><div class="printed" id="printed"></div>`;
     this.renderScale(false);
+  },
+
+  // 機内持ち込み手荷物(3日目から)。サイズ確認器の絵と、寸法・重さ
+  carryHTML(p) {
+    if (Game.day.n < 3 || !p.carry || p.rebook) return '';
+    const c = p.carry, KN = { roller: 'キャリーケース', backpack: 'リュック', tote: 'トートバッグ' };
+    return `<div class="carry-card ${p.carryCheck ? 'checked' : ''} ${c.items.length > 1 ? 'multi' : ''}" id="carry">
+      <div class="carry-pics">${c.items.map((b) => Art.sizer(b)).join('')}</div>
+      <div class="carry-info"><header><b>機内持ち込み</b><small>高さ×幅×奥行</small></header>
+        ${c.items.map((b, i) => `<div class="carry-dim"><small>${KN[b.kind]}${c.items.length > 1 ? ` ${i + 1}` : ''}<span class="hw">(高さ×幅×奥行)</span></small><b>${b.h}×${b.w}×${b.d}<span>cm</span></b></div>`).join('')}
+        <div class="carry-foot"><span>身の回り品 <b>${c.personal ? '1個' : 'なし'}</b></span><span>合計 <b>${c.kg.toFixed(1)}kg</b></span></div></div>
+      ${p.carryCheck ? '<div class="carry-stamp">お預かり</div>' : ''}</div>`;
   },
 
   renderScale(anim) {
@@ -237,7 +249,8 @@ Scenes.counter = {
 
   termBag(p) {
     const n = Game.day.n, bs = p.bs;
-    if (!p.bag) return `${this.booking(p)}<p class="sub-h">預けるスーツケースはありません。</p>${this.svcBox(p)}<div class="acts"><button class="btn primary" data-act="bag-none">座席の指定へ</button></div>`;
+    const carry = n >= 3 && p.carry ? `<div class="opt-row"><small>機内持ち込み</small><button class="btn small tog" data-act="carry" aria-pressed="${!!p.carryCheck}">持ち込めない荷物を預かる</button>${n === 3 ? '<span class="mute small">55×40×25cm・合計115cm・10kg・1個まで</span>' : ''}</div>` : '';
+    if (!p.bag) return `${this.booking(p)}<p class="sub-h">預けるスーツケースはありません。</p>${carry}${this.svcBox(p)}<div class="acts"><button class="btn primary" data-act="bag-none">座席の指定へ</button></div>`;
     const tag = n >= 7 ? `<div class="opt-row"><small>荷物の行き先</small>
         <button class="btn small tog" data-act="tag" data-v="dest" aria-pressed="${!p.tagThrough}">${p.flight.dest} ${p.flight.ap.name}まで</button>
         <button class="btn small tog" data-act="tag" data-v="conn" aria-pressed="${p.tagThrough}">乗り継ぎ先まで</button></div>` : '';
@@ -248,7 +261,7 @@ Scenes.counter = {
         ${n >= 2 ? `<button class="btn" data-act="ask" ${bs.asked ? 'disabled' : ''}>${bs.asked ? '危険物 確認済み' : '危険物を確認する'}</button>` : ''}
       </div>
       ${bs.revealed && bs.battery ? '<div class="acts"><button class="btn warn" data-act="battery">バッテリーを取り出してもらう</button></div>' : ''}
-      ${tag}${this.svcBox(p)}
+      ${tag}${carry}${this.svcBox(p)}
       ${bs.weighed
         ? `<div class="acts row3">
           <button class="btn primary" data-act="bag-accept">このまま預かる</button>
@@ -302,7 +315,8 @@ Scenes.counter = {
       case 'bag-accept': this.bagDecide('accept'); break;
       case 'bag-fee': this.bagDecide('fee'); break;
       case 'bag-repack': this.bagDecide('repack'); break;
-      case 'bag-none': this.evalSvc(p); this.toSeat(DATA.staff.noBag); break;
+      case 'bag-none': this.evalSvc(p); this.evalCarry(p); this.toSeat(DATA.staff.noBag); break;
+      case 'carry': this.toggleCarry(); break;
       case 'esta': if (!p.estaShown) { p.estaShown = true; this.talk(DATA.staff.estaQ, null); this.renderTerm(); } break;
       case 'svc': this.toggleSvc(ds.k); break;
       case 'tag': p.tagThrough = ds.v === 'conn'; this.renderTerm(); break;
@@ -342,6 +356,25 @@ Scenes.counter = {
       else if (want) { p.res.bad.push(DATA.svc[k].miss); p.res.pts += SC.svcMiss; Game.decision(false); }
       else if (got) { p.res.bad.push(`必要のない「${DATA.svc[k].label}」をしてしまった`); p.res.pts += SC.svcExtra; Game.decision(false); }
     }
+  },
+
+  // 機内持ち込み手荷物を預かりに回す(押すたびに切り替え)
+  toggleCarry() {
+    const p = this.s.cur; if (!p || !p.carry || this.s.step !== 'bag') return;
+    p.carryCheck = !p.carryCheck;
+    if (p.carryCheck) { this.talk(DATA.staff.carry, null); Sfx.pop(); }
+    const el = document.getElementById('carry'); if (el) el.outerHTML = this.carryHTML(p);
+    this.renderTerm();
+  },
+
+  // 機内持ち込み手荷物の採点(3日目から。手荷物の画面を出るときに1回)
+  evalCarry(p) {
+    if (p.carryEvaluated || Game.day.n < 3 || !p.carry) return;
+    p.carryEvaluated = true;
+    const SC = CONFIG.score, prob = Rules.carryProblem(p);
+    if (prob && p.carryCheck) { p.res.good.push(`持ち込めない手荷物をお預かりした(${prob})`); p.res.pts += SC.carryRight; Game.decision(true); }
+    else if (prob) { p.res.bad.push(`${prob}のに、そのまま機内に持ち込ませた`); p.res.pts += SC.carryMiss; Game.decision(false); }
+    else if (p.carryCheck) { p.res.bad.push('機内に持ち込める手荷物まで預からせてしまった'); p.res.pts += SC.carryExtra; Game.decision(false); Game.addSat(-4); }
   },
 
   // 荷物の行き先の採点(7日目から)
@@ -443,7 +476,7 @@ Scenes.counter = {
     }
     if (bs.battery) bad('モバイルバッテリーが入ったまま預かってしまった');
     p.bagAccepted = true;
-    this.evalTag(p); this.evalSvc(p);
+    this.evalTag(p); this.evalSvc(p); this.evalCarry(p);
     this.toSeat(kind === 'fee' ? DATA.staff.fee : DATA.staff.accept, reply);
   },
 

@@ -2,11 +2,10 @@
 const Progress = {
   // 昇進して解放された仕事か
   unlocked(job, total = Store.data.total) { return DATA.ranks.some((r) => r.unlock === job && total >= r.min); },
-  // その日、カウンターとゲートの間に入る仕事(2つとも解放されたら日替わり)
+  // その日、カウンターとゲートの間に入る仕事(解放された仕事を日替わりで)
   midFor(n) {
     const un = Object.keys(DATA.jobs).filter((j) => this.unlocked(j));
-    if (!un.length) return null;
-    return un.length === 1 ? un[0] : un[n % 2];
+    return un.length ? un[n % un.length] : null;
   },
   // 特別な日:9日目から3日ごと
   eventFor(n) {

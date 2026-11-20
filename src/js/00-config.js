@@ -1,6 +1,6 @@
 'use strict';
 /* =====================================================================
-   グランドスタッフシミュレーター  v0.3
+   グランドスタッフシミュレーター  v0.5
    ---------------------------------------------------------------------
    拡張の入口(大きくするときはここから)
    - 新しいトラブル      → 03-rules.js の ISSUES に1つ追加
@@ -10,7 +10,7 @@
    - 新しい業務(シーン)  → Scenes.xxx = { enter, update, onAct } を作り Game.go('xxx')
    ===================================================================== */
 const CONFIG = {
-  version: '0.4.0',
+  version: '0.5.0',
   saveKey: 'gss-save-v1',
   startDate: '2026-12-01',   // 勤務1日目の日付
   gateSpeed: 6,              // 搭乗ゲートの時間の速さ(実時間1秒 = ゲーム内6秒)
@@ -23,6 +23,7 @@ const CONFIG = {
     missedQueue: -150, fast: 20,
     svcRight: 40, svcMiss: -120, svcExtra: -60, tagRight: 40, tagWrong: -100,
     exitBad: -150, exitDeclined: 30, rebookBest: 100, rebookOk: 40, rebookBad: -100,
+    carryRight: 50, carryMiss: -100, carryExtra: -60,
     // 搭乗ゲート
     gBoard: 15, gHold: 40, gRedirect: 80,
     gWrongBoard: -300, gEarlyBoard: -30, gWrongHold: -60, gWrongWait: -40, gWrongRedirect: -150,

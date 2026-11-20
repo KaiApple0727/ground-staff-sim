@@ -157,7 +157,7 @@ h1, h2, h3 { text-wrap: balance; }
 .rules { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; align-content: start; gap: 7px; padding-right: 2px; }
 .rule { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--amber); border-radius: 0 8px 8px 0; padding: 7px 12px; }
 .rule small { color: var(--mute); font-size: 11px; }
-.rule b { display: block; }
+.rule > b { display: block; }
 .rule p { margin: 2px 0 0; font-size: 13px; }
 .b-rules > .btn { align-self: flex-start; flex: none; }
 
@@ -805,3 +805,96 @@ body.phone .counter-scene:is([data-step="seat"], [data-step="rebook"], [data-ste
 /* お知らせは上部バーを避けて少し下に、小さめに出す */
 body.phone #toasts { top: 52px; width: calc(100% - 20px); gap: 4px; }
 body.phone .toast { font-size: 13px; padding: 7px 11px; opacity: .96; }
+
+/* ===== 機内持ち込み手荷物(カウンターの手荷物の手順) ===== */
+.carry-card { position: relative; display: flex; gap: 9px; align-items: flex-end; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 4px 9px; line-height: 1.3; }
+.carry-card.checked { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.carry-pics { display: flex; gap: 2px; }
+.sizer { width: 50px; height: 63px; display: block; }
+.sizer .sz-t { font-size: 10px; fill: var(--mute); font-family: var(--f-mono); }
+.carry-info header { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; }
+.carry-info header small { display: none; font-size: 10px; color: var(--mute); }
+.carry-dim small { display: block; font-size: 10.5px; color: var(--mute); white-space: nowrap; }
+.carry-dim .hw { font-size: 9.5px; }
+.carry-card.multi .sizer { width: 44px; height: 56px; }
+.carry-dim b { display: block; font-family: var(--f-mono); font-size: 16px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.carry-dim b span { font-size: 11px; margin-left: 2px; }
+.carry-foot { display: flex; gap: 10px; font-size: 11px; color: var(--mute); margin-top: 1px; white-space: nowrap; }
+.carry-foot b { color: var(--ink); font-family: var(--f-mono); }
+.carry-stamp { position: absolute; right: 8px; top: 4px; transform: rotate(-8deg); border: 2px solid var(--brand); color: var(--brand); background: rgba(255, 255, 255, .85); font-weight: 700; font-size: 12.5px; padding: 0 8px; border-radius: 6px; }
+
+/* ===== 予約カウンター・忘れ物センター ===== */
+.gs-num.reserve { background: var(--brand); color: #fff; }
+.gs-num.lost { background: #5d4596; color: #fff; }
+.rs-reader, .lf-reader { align-items: stretch; justify-content: flex-start; overflow: auto; gap: 14px; }
+.rs-left { width: 210px; flex: none; display: flex; flex-direction: column; gap: 8px; }
+.rs-left .reader-pax { width: auto; }
+.rs-left .bubble.mini { max-width: 100%; }
+.rs-memo { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; display: grid; gap: 3px; font-size: 12.5px; }
+.rs-memo div { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px; align-items: baseline; }
+.rs-memo dt { color: var(--mute); font-size: 11px; }
+.rs-memo dd { margin: 0; font-weight: 700; }
+.rs-right { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rs-tabs { display: flex; gap: 4px; }
+.rs-tab { flex: 1; border: 1.5px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 4px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--ink); }
+.rs-tab[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+.rs-head { margin: 0; font-size: 11.5px; color: #333b44; font-weight: 700; }
+.rs-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 12.5px; background: rgba(255, 255, 255, .55); border-radius: 8px; table-layout: fixed; }
+.rs-table th { font-size: 11px; text-align: left; color: #3d454e; padding: 0 2px; }
+.rs-table th:nth-child(1) { width: 62px; } .rs-table th:nth-child(2) { width: 58px; }
+.rs-table th small { display: block; font-weight: 400; font-size: 9.5px; color: var(--mute); }
+.rs-table td { padding: 0; }
+.rs-time { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.rs-time small { display: block; color: var(--mute); font-size: 11px; }
+.rs-cell { width: 100%; display: flex; flex-direction: column; align-items: flex-start; padding: 4px 7px; border: 1.5px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; font-variant-numeric: tabular-nums; color: var(--ink); }
+.rs-cell b { font-size: 13px; }
+.rs-cell small { font-size: 10.5px; color: var(--mute); }
+.rs-cell:hover:not(:disabled) { border-color: var(--ink); }
+.rs-cell.sel { border-color: var(--brand); background: #eef2fb; box-shadow: inset 0 0 0 1px var(--brand); }
+.rs-cell.off { display: block; color: #8e969e; background: #e9ecef; border-style: dashed; font-size: 11px; text-align: center; padding: 9px 2px; cursor: default; }
+.lf-list { display: grid; gap: 5px; }
+.lf-rec { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 1px; align-items: center; text-align: left; padding: 5px 9px; border: 1.5px solid var(--line); border-radius: 8px; background: #fff; cursor: pointer; font-size: 12.5px; color: var(--ink); }
+.lf-rec:hover:not(:disabled) { border-color: var(--ink); }
+.lf-rec.sel { border-color: var(--brand); background: #eef2fb; box-shadow: inset 0 0 0 1px var(--brand); }
+.lf-rec .lost-ico { grid-row: 1 / 3; width: 38px; height: 38px; background: #eef1f4; border-radius: 6px; }
+.lf-main { grid-column: 2; }
+.lf-sub { grid-column: 2; font-size: 11px; color: var(--mute); }
+.lf-store { grid-column: 3; grid-row: 1; font-size: 11px; font-weight: 700; color: var(--ok); text-align: right; }
+.lf-store.away { color: var(--warn); }
+.lf-no { grid-column: 3; grid-row: 2; font-size: 10px; color: var(--mute); font-family: var(--f-mono); text-align: right; }
+
+/* スマホ */
+body.phone .carry-card { width: 100%; padding: 4px 10px; gap: 10px; align-items: center; }
+body.phone .sizer, body.phone .carry-card.multi .sizer { width: 36px; height: 46px; }
+body.phone .carry-info header { font-size: 11.5px; }
+body.phone .carry-info header small { display: inline; }
+body.phone .carry-dim .hw { display: none; }
+body.phone .carry-dim { display: flex; align-items: baseline; gap: 6px; }
+body.phone .carry-dim small { display: inline; min-width: 5.6em; }
+body.phone .carry-dim b { font-size: 16px; }
+body.phone .carry-stamp { top: auto; bottom: 6px; }
+body.phone .opt-row { margin-top: 6px; }
+body.phone .opt-row small { flex-basis: auto; min-width: 6em; }
+body.phone .rs-left { width: 100%; }
+body.phone .rs-memo { grid-template-columns: 1fr 1fr; gap: 2px 10px; padding: 5px 8px; font-size: 12px; }
+body.phone .rs-memo div { grid-template-columns: 38px minmax(0, 1fr); }
+body.phone .rs-memo div:nth-child(4), body.phone .rs-memo div:nth-child(5) { grid-column: 1 / -1; }
+body.phone .rs-tab { font-size: 12px; padding: 6px 2px; }
+body.phone .rs-table { border-spacing: 2px; font-size: 11.5px; }
+body.phone .rs-table th:nth-child(1) { width: 50px; } body.phone .rs-table th:nth-child(2) { width: 44px; }
+body.phone .rs-table th { font-size: 10px; }
+body.phone .rs-table th small { font-size: 8.5px; }
+body.phone .rs-time { font-size: 11.5px; }
+body.phone .rs-time small { font-size: 10px; }
+body.phone .rs-cell { padding: 3px 4px; }
+body.phone .rs-cell b { font-size: 11.5px; }
+body.phone .rs-cell small { font-size: 9.5px; }
+body.phone .rs-cell.off { font-size: 9.5px; padding: 7px 1px; }
+body.phone .lf-rec { font-size: 12px; padding: 5px 7px; column-gap: 6px; }
+body.phone .lf-rec .lost-ico { width: 34px; height: 34px; }
+body.phone .lost-scene .g-acts .btn.danger { grid-column: 1 / -1; }
+.scale-area:has(.carry-card) .belt { width: 124px; }
+body.phone .scale-area:has(.carry-card) .belt { width: 110px; }
+/* 機内持ち込みは手荷物の手順でだけ出す。そのあいだ、ひとり旅の申込書は引っ込める(書類の確認で見たもの) */
+.counter-scene:not([data-step="bag"]) .carry-card { display: none; }
+.counter-scene[data-step="bag"] .scale-area:has(.carry-card) .umform { display: none; }

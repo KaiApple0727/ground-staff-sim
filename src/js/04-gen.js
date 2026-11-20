@@ -54,6 +54,21 @@ const Gen = {
     return U.digits(9);
   },
 
+  // 機内持ち込み手荷物(ふつうは制限内。ぎりぎりのものも混ぜる)
+  carryItem(kind, small) {
+    kind = kind || U.weighted(['roller', 'backpack', 'tote'], [5, 3.5, 1.5]);
+    const tight = !small && U.chance(0.35);
+    let h, w, d;
+    if (kind === 'roller') { h = tight ? 55 : U.int(46, 55); w = U.int(34, 40); d = U.int(20, 25); }
+    else if (kind === 'backpack') { h = U.int(40, small ? 46 : 52); w = U.int(28, 36); d = U.int(14, 23); }
+    else { h = U.int(30, 40); w = U.int(36, 40); d = U.int(12, 18); }
+    while (h + w + d > 115) { if (d > 18) d--; else w--; }
+    return { kind, h, w, d, color: U.pick(['#2c3e57', '#3c3f44', '#7d2f2f', '#2f6a4f', '#6b5b95', '#a87a2e', '#4a6b8a']) };
+  },
+  carry() {
+    if (!U.chance(0.85)) return null;
+    return { items: [this.carryItem()], personal: U.chance(0.55), kg: U.r1(U.chance(0.25) ? U.float(9.2, 10) : U.float(2.5, 9)) };
+  },
   bag(allowance) {
     return { weight: U.r1(U.float(Math.max(5, allowance - 11), allowance - 0.4)), battery: false, color: U.pick(['#c0392b', '#2f6fdb', '#2b2f36', '#e0a526', '#6a8f3a', '#8b52c9', '#9aa4ad']) };
   },
@@ -137,7 +152,7 @@ const Gen = {
       bag: U.chance(ctx.cfg.bagRate || (f.intl ? 0.85 : 0.65)) ? this.bag(allowance) : null,
       seatReq: ctx.cfg.exitReq && U.chance(ctx.cfg.exitReq) ? 'exit' : U.pick([null, null, 'window', 'aisle', 'front']),
       esta: f.ap.entry === 'ESTA' && nat !== 'US' ? { status: 'approved', until: U.addDays(ctx.date, U.int(30, 700)) } : null,
-      arrival: 0, issue: null,
+      arrival: 0, issue: null, carry: this.carry(),
     };
     this.setAge(p, U.int(19, 78), ctx.date);
     if (cls === 'J' && (p.seatReq === 'front' || p.seatReq === 'exit')) p.seatReq = null; // J は前方。非常口はエコノミーの8列目

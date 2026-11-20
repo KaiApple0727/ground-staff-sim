@@ -167,7 +167,7 @@ h1, h2, h3 { text-wrap: balance; }
 .rules { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; align-content: start; gap: 7px; padding-right: 2px; }
 .rule { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--amber); border-radius: 0 8px 8px 0; padding: 7px 12px; }
 .rule small { color: var(--mute); font-size: 11px; }
-.rule b { display: block; }
+.rule > b { display: block; }
 .rule p { margin: 2px 0 0; font-size: 13px; }
 .b-rules > .btn { align-self: flex-start; flex: none; }
 
@@ -816,6 +816,99 @@ body.phone .counter-scene:is([data-step="seat"], [data-step="rebook"], [data-ste
 body.phone #toasts { top: 52px; width: calc(100% - 20px); gap: 4px; }
 body.phone .toast { font-size: 13px; padding: 7px 11px; opacity: .96; }
 
+/* ===== 機内持ち込み手荷物(カウンターの手荷物の手順) ===== */
+.carry-card { position: relative; display: flex; gap: 9px; align-items: flex-end; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 4px 9px; line-height: 1.3; }
+.carry-card.checked { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.carry-pics { display: flex; gap: 2px; }
+.sizer { width: 50px; height: 63px; display: block; }
+.sizer .sz-t { font-size: 10px; fill: var(--mute); font-family: var(--f-mono); }
+.carry-info header { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; }
+.carry-info header small { display: none; font-size: 10px; color: var(--mute); }
+.carry-dim small { display: block; font-size: 10.5px; color: var(--mute); white-space: nowrap; }
+.carry-dim .hw { font-size: 9.5px; }
+.carry-card.multi .sizer { width: 44px; height: 56px; }
+.carry-dim b { display: block; font-family: var(--f-mono); font-size: 16px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.carry-dim b span { font-size: 11px; margin-left: 2px; }
+.carry-foot { display: flex; gap: 10px; font-size: 11px; color: var(--mute); margin-top: 1px; white-space: nowrap; }
+.carry-foot b { color: var(--ink); font-family: var(--f-mono); }
+.carry-stamp { position: absolute; right: 8px; top: 4px; transform: rotate(-8deg); border: 2px solid var(--brand); color: var(--brand); background: rgba(255, 255, 255, .85); font-weight: 700; font-size: 12.5px; padding: 0 8px; border-radius: 6px; }
+
+/* ===== 予約カウンター・忘れ物センター ===== */
+.gs-num.reserve { background: var(--brand); color: #fff; }
+.gs-num.lost { background: #5d4596; color: #fff; }
+.rs-reader, .lf-reader { align-items: stretch; justify-content: flex-start; overflow: auto; gap: 14px; }
+.rs-left { width: 210px; flex: none; display: flex; flex-direction: column; gap: 8px; }
+.rs-left .reader-pax { width: auto; }
+.rs-left .bubble.mini { max-width: 100%; }
+.rs-memo { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; display: grid; gap: 3px; font-size: 12.5px; }
+.rs-memo div { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px; align-items: baseline; }
+.rs-memo dt { color: var(--mute); font-size: 11px; }
+.rs-memo dd { margin: 0; font-weight: 700; }
+.rs-right { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rs-tabs { display: flex; gap: 4px; }
+.rs-tab { flex: 1; border: 1.5px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 4px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--ink); }
+.rs-tab[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+.rs-head { margin: 0; font-size: 11.5px; color: #333b44; font-weight: 700; }
+.rs-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 12.5px; background: rgba(255, 255, 255, .55); border-radius: 8px; table-layout: fixed; }
+.rs-table th { font-size: 11px; text-align: left; color: #3d454e; padding: 0 2px; }
+.rs-table th:nth-child(1) { width: 62px; } .rs-table th:nth-child(2) { width: 58px; }
+.rs-table th small { display: block; font-weight: 400; font-size: 9.5px; color: var(--mute); }
+.rs-table td { padding: 0; }
+.rs-time { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.rs-time small { display: block; color: var(--mute); font-size: 11px; }
+.rs-cell { width: 100%; display: flex; flex-direction: column; align-items: flex-start; padding: 4px 7px; border: 1.5px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; font-variant-numeric: tabular-nums; color: var(--ink); }
+.rs-cell b { font-size: 13px; }
+.rs-cell small { font-size: 10.5px; color: var(--mute); }
+.rs-cell:hover:not(:disabled) { border-color: var(--ink); }
+.rs-cell.sel { border-color: var(--brand); background: #eef2fb; box-shadow: inset 0 0 0 1px var(--brand); }
+.rs-cell.off { display: block; color: #8e969e; background: #e9ecef; border-style: dashed; font-size: 11px; text-align: center; padding: 9px 2px; cursor: default; }
+.lf-list { display: grid; gap: 5px; }
+.lf-rec { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 1px; align-items: center; text-align: left; padding: 5px 9px; border: 1.5px solid var(--line); border-radius: 8px; background: #fff; cursor: pointer; font-size: 12.5px; color: var(--ink); }
+.lf-rec:hover:not(:disabled) { border-color: var(--ink); }
+.lf-rec.sel { border-color: var(--brand); background: #eef2fb; box-shadow: inset 0 0 0 1px var(--brand); }
+.lf-rec .lost-ico { grid-row: 1 / 3; width: 38px; height: 38px; background: #eef1f4; border-radius: 6px; }
+.lf-main { grid-column: 2; }
+.lf-sub { grid-column: 2; font-size: 11px; color: var(--mute); }
+.lf-store { grid-column: 3; grid-row: 1; font-size: 11px; font-weight: 700; color: var(--ok); text-align: right; }
+.lf-store.away { color: var(--warn); }
+.lf-no { grid-column: 3; grid-row: 2; font-size: 10px; color: var(--mute); font-family: var(--f-mono); text-align: right; }
+
+/* スマホ */
+body.phone .carry-card { width: 100%; padding: 4px 10px; gap: 10px; align-items: center; }
+body.phone .sizer, body.phone .carry-card.multi .sizer { width: 36px; height: 46px; }
+body.phone .carry-info header { font-size: 11.5px; }
+body.phone .carry-info header small { display: inline; }
+body.phone .carry-dim .hw { display: none; }
+body.phone .carry-dim { display: flex; align-items: baseline; gap: 6px; }
+body.phone .carry-dim small { display: inline; min-width: 5.6em; }
+body.phone .carry-dim b { font-size: 16px; }
+body.phone .carry-stamp { top: auto; bottom: 6px; }
+body.phone .opt-row { margin-top: 6px; }
+body.phone .opt-row small { flex-basis: auto; min-width: 6em; }
+body.phone .rs-left { width: 100%; }
+body.phone .rs-memo { grid-template-columns: 1fr 1fr; gap: 2px 10px; padding: 5px 8px; font-size: 12px; }
+body.phone .rs-memo div { grid-template-columns: 38px minmax(0, 1fr); }
+body.phone .rs-memo div:nth-child(4), body.phone .rs-memo div:nth-child(5) { grid-column: 1 / -1; }
+body.phone .rs-tab { font-size: 12px; padding: 6px 2px; }
+body.phone .rs-table { border-spacing: 2px; font-size: 11.5px; }
+body.phone .rs-table th:nth-child(1) { width: 50px; } body.phone .rs-table th:nth-child(2) { width: 44px; }
+body.phone .rs-table th { font-size: 10px; }
+body.phone .rs-table th small { font-size: 8.5px; }
+body.phone .rs-time { font-size: 11.5px; }
+body.phone .rs-time small { font-size: 10px; }
+body.phone .rs-cell { padding: 3px 4px; }
+body.phone .rs-cell b { font-size: 11.5px; }
+body.phone .rs-cell small { font-size: 9.5px; }
+body.phone .rs-cell.off { font-size: 9.5px; padding: 7px 1px; }
+body.phone .lf-rec { font-size: 12px; padding: 5px 7px; column-gap: 6px; }
+body.phone .lf-rec .lost-ico { width: 34px; height: 34px; }
+body.phone .lost-scene .g-acts .btn.danger { grid-column: 1 / -1; }
+.scale-area:has(.carry-card) .belt { width: 124px; }
+body.phone .scale-area:has(.carry-card) .belt { width: 110px; }
+/* 機内持ち込みは手荷物の手順でだけ出す。そのあいだ、ひとり旅の申込書は引っ込める(書類の確認で見たもの) */
+.counter-scene:not([data-step="bag"]) .carry-card { display: none; }
+.counter-scene[data-step="bag"] .scale-area:has(.carry-card) .umform { display: none; }
+
 </style>
 </head>
 <body>
@@ -829,7 +922,7 @@ body.phone .toast { font-size: 13px; padding: 7px 11px; opacity: .96; }
 /* ===== 00-config.js ===== */
 'use strict';
 /* =====================================================================
-   グランドスタッフシミュレーター  v0.3
+   グランドスタッフシミュレーター  v0.5
    ---------------------------------------------------------------------
    拡張の入口(大きくするときはここから)
    - 新しいトラブル      → 03-rules.js の ISSUES に1つ追加
@@ -839,7 +932,7 @@ body.phone .toast { font-size: 13px; padding: 7px 11px; opacity: .96; }
    - 新しい業務(シーン)  → Scenes.xxx = { enter, update, onAct } を作り Game.go('xxx')
    ===================================================================== */
 const CONFIG = {
-  version: '0.4.0',
+  version: '0.5.0',
   saveKey: 'gss-save-v1',
   startDate: '2026-12-01',   // 勤務1日目の日付
   gateSpeed: 6,              // 搭乗ゲートの時間の速さ(実時間1秒 = ゲーム内6秒)
@@ -852,6 +945,7 @@ const CONFIG = {
     missedQueue: -150, fast: 20,
     svcRight: 40, svcMiss: -120, svcExtra: -60, tagRight: 40, tagWrong: -100,
     exitBad: -150, exitDeclined: 30, rebookBest: 100, rebookOk: 40, rebookBad: -100,
+    carryRight: 50, carryMiss: -100, carryExtra: -60,
     // 搭乗ゲート
     gBoard: 15, gHold: 40, gRedirect: 80,
     gWrongBoard: -300, gEarlyBoard: -30, gWrongHold: -60, gWrongWait: -40, gWrongRedirect: -150,
@@ -1000,8 +1094,8 @@ const DATA = {
   // ランク(累計 = 各日の自己ベストの合計)。unlock = 昇進すると増える仕事
   ranks: [
     { min: 0, name: '研修生', en: 'TRAINEE' },
-    { min: 1500, name: 'グランドスタッフ', en: 'GROUND STAFF' },
-    { min: 5000, name: '中堅スタッフ', en: 'SENIOR STAFF' },
+    { min: 1500, name: 'グランドスタッフ', en: 'GROUND STAFF', unlock: 'reserve' },
+    { min: 5000, name: '中堅スタッフ', en: 'SENIOR STAFF', unlock: 'lost' },
     { min: 12000, name: 'チーフ', en: 'CHIEF', unlock: 'lounge' },
     { min: 20000, name: 'スーパーバイザー', en: 'SUPERVISOR', unlock: 'baggage' },
     { min: 30000, name: '旅客サービス責任者', en: 'DUTY MANAGER' },
@@ -1010,6 +1104,8 @@ const DATA = {
 
   // 昇進で増える仕事(カウンターと搭乗ゲートの間に入る)
   jobs: {
+    reserve: { name: '予約カウンター', en: 'RESERVATIONS', desc: 'お客様の希望(日付・人数・時間・運賃)を聞いて、条件に合う便と運賃を予約します。' },
+    lost: { name: '忘れ物センター', en: 'LOST & FOUND', desc: '忘れ物の届けを聞き、見つかった物の記録から持ち主の物を探して、お渡しか取り寄せを手配します。' },
     lounge: { name: 'ラウンジ受付', en: 'LOUNGE', desc: '搭乗券と会員カードを見て、ラウンジに入れるかを判断します。' },
     baggage: { name: '手荷物の仕分け', en: 'BAGGAGE', desc: '流れてくる荷物のタグを見て、正しい便のカートへ仕分けます。' },
   },
@@ -1067,7 +1163,7 @@ const DATA = {
     },
     {
       title: '3日目', start: '06:20', speed: 9, pax: 8, gatePax: 15, issueRate: 0.5,
-      brief: '朝一番のソウル行きは締切が早いので要注意。今日から、予約の日付・締切後に来たお客様・32kgを超える荷物にも気をつけます。',
+      brief: '朝一番のソウル行きは締切が早いので要注意。今日から、予約の日付・締切後に来たお客様・32kgを超える荷物、機内に持ち込む手荷物の大きさにも気をつけます。',
       flights: [{ no: '711', dest: 'ICN', dep: '07:40', gate: '22' }, { no: '201', dest: 'CTS', dep: '07:30', gate: '2' }, { no: '107', dest: 'OKA', dep: '08:10', gate: '6' }],
       gate: { wrong: 2, early: 0.2, noShow: 1, noShowBag: 0, latecomers: 2, sameDest: 0.3 },
     },
@@ -1125,6 +1221,7 @@ const DATA = {
         { day: 1, t: '無料で預けられる重さ', b: '<table class="mtable"><tr><th></th><th>エコノミー・普通席(Y)</th><th>ビジネス・上級席(J)</th></tr><tr><th>国内線</th><td>20kg</td><td>30kg</td></tr><tr><th>国際線</th><td>23kg</td><td>32kg</td></tr></table>eチケットにも書いてあります。超えていたら「超過料金を案内」します。' },
         { day: 2, t: '危険物の確認', b: '預かる前に<b>必ず「危険物を確認する」</b>。モバイルバッテリーは預け荷物に入れられないので、取り出して機内に持ち込んでもらいます。' },
         { day: 3, t: '1個32kgまで', b: '32kgを超える荷物はお預かりできません。「詰め替えを依頼」して、もう一度量ります。' },
+        { day: 3, t: '機内持ち込み手荷物', b: '機内に持ち込めるのは<b>手荷物1個</b>と<b>身の回り品(ハンドバッグなど)1個</b>まで。手荷物は<b>高さ55・幅40・奥行25cm以内</b>で、<b>3辺の合計115cm以内</b>。重さは身の回り品と<b>合わせて10kgまで</b>。1つでも超えていたら「持ち込めない荷物を預かる」を押します。' },
         { day: 7, t: '乗り継ぎ(スルーチェックイン)', b: 'eチケットに乗り継ぎ便が書いてあるお客様は、荷物の行き先を<b>「乗り継ぎ先まで」</b>にします。到着地で受け取って預け直さなくてすみます。' },
       ],
     },
@@ -1153,6 +1250,20 @@ const DATA = {
         { day: 1, t: 'ドアクローズ', b: '出発の<b>10分前</b>までに「搭乗締切」をすると定刻出発です。全グループを案内したら「最終案内」で、まだ来ていないお客様を呼びます。' },
         { day: 2, t: '来ないお客様', b: '最終案内からゲーム内で<b>3分ほど</b>待っても来なければ、締め切ってかまいません。もうすぐ来るお客様を置いていくとクレームになります。' },
         { day: 4, t: '手荷物の取り降ろし', b: '来なかったお客様が荷物を預けていた場合、安全のため荷物を降ろします。そのぶん出発が遅れますが、やむを得ない遅れとして扱います。' },
+      ],
+    },
+    {
+      title: '予約カウンター', items: [
+        { day: 1, job: 'reserve', t: '予約のしかた', b: 'お客様の<b>日付</b>のタブを開き、<b>行き先・人数・時間</b>の条件に合う便の運賃を選んで「この内容で予約する」。最初に開いているのは、いちばん左の日付です。' },
+        { day: 1, job: 'reserve', t: '運賃と残席', b: '<b>フレックス</b>は変更できる運賃。<b>バリュー</b>(3日前まで)・<b>スーパーバリュー</b>(21日前まで)は安いかわりに変更できません。グループは<b>全員同じ運賃</b>なので、その運賃の<b>残席が人数分</b>必要です。' },
+        { day: 1, job: 'reserve', t: '選ぶ順番', b: '「できるだけ安く」→ 条件に合う中で<b>いちばん安い運賃</b>。「変更できるきっぷ」→ <b>フレックスの中で</b>いちばん安いもの。「早く着きたい」→ <b>到着がいちばん早い便</b>の、いちばん安い運賃。合う便がなければ「ご希望の便がない」と伝えます。' },
+      ],
+    },
+    {
+      title: '忘れ物センター', items: [
+        { day: 1, job: 'lost', t: '持ち主の物を探す', b: 'お客様の話と、記録の<b>品物・色・特徴・見つかった場所</b>がすべて合うものを選びます。似た物がたくさんあるので、1つずつ確かめましょう。' },
+        { day: 1, job: 'lost', t: '時刻と日付', b: 'お客様がそこにいた<b>時刻より前</b>に見つかった物や、<b>昨日</b>見つかった物は、その方の物ではありません。機内の忘れ物は、便が<b>到着したあと</b>に見つかります。' },
+        { day: 1, job: 'lost', t: 'お渡しと取り寄せ', b: '<b>保管場所</b>が当空港なら「お渡しする」。飛行機が次の空港へ飛んでから見つかった物は、その空港に保管されているので「取り寄せを手配」。どれも合わなければ「届いていない」。' },
       ],
     },
     {
@@ -1261,6 +1372,16 @@ const DATA = {
       pet: 'ワンちゃんは貨物室でお預かりいたします。',
       fragile: '壊れ物タグをお付けして、お預かりいたします。',
     },
+    carry: '恐れ入ります、こちらのお荷物は機内に持ち込めないため、お預かりいたします。',
+    reserve: {
+      ok: 'ご予約を承りました。ご搭乗をお待ちしております。',
+      none: '申し訳ございません。ご希望の条件に合う便がございません。',
+    },
+    lost: {
+      here: 'こちらでお間違いないでしょうか。お返しいたします。',
+      send: '{place}で保管しております。お取り寄せを手配いたします。',
+      none: 'まだ届いておりません。見つかりしだいご連絡いたします。',
+    },
     lounge: {
       ok: 'ようこそ、つばさラウンジへ。ごゆっくりお過ごしください。',
       fee: '恐れ入ります、お連れ様はラウンジ券(有料)でのご案内となります。',
@@ -1358,6 +1479,22 @@ const ISSUES = {
     day: 3, can: () => true,
     apply(p) { if (!p.bag) p.bag = Gen.bag(p.allowance); p.bag.weight = U.r1(U.float(32.4, 38)); },
   },
+  // 機内に持ち込めない手荷物(大きすぎる・3辺の合計オーバー・重すぎる・2個ある)
+  carry_big: {
+    day: 3, can: (p) => !!p.carry && !p.rebook,
+    apply(p) {
+      const c = p.carry, b = c.items[0], mode = U.pick(['size', 'size', 'sum', 'heavy', 'many']);
+      if (mode === 'size') {
+        const dim = U.pick(['h', 'h', 'w', 'd']);
+        if (dim === 'h') b.h = U.int(56, 61); else if (dim === 'w') b.w = U.int(41, 45); else b.d = U.int(26, 30);
+        if (b.kind === 'tote' && dim === 'h') b.kind = 'roller';
+      } else if (mode === 'sum') {
+        // 1辺ずつは制限内なのに、3辺の合計だけが115cmを超える
+        b.kind = 'roller'; b.h = U.int(54, 55); b.w = U.int(38, 40); b.d = U.int(116 - b.h - b.w, 25);
+      } else if (mode === 'heavy') c.kg = U.r1(U.float(10.6, 14.5));
+      else c.items.push(Gen.carryItem('backpack', true));
+    },
+  },
   no_passport: {
     day: 4, can: (p) => p.flight.intl,
     apply(p) { p.passport = null; p.forgot = true; },
@@ -1411,6 +1548,16 @@ const Rules = {
   bestAlt(alts, need) {
     const ok = alts.filter((a) => this.altFits(a, need)).sort((x, y) => (x.tomorrow - y.tomorrow) || (x.dep - y.dep));
     return ok[0] || null;
+  },
+  // 機内持ち込み手荷物の問題(なければ null)。高さ55・幅40・奥行25cm、3辺の合計115cm、合計10kg、手荷物1個まで
+  carryProblem(p) {
+    const c = p.carry; if (!c) return null;
+    if (c.items.length > 1) return `手荷物が${c.items.length}個あった(持ち込めるのは手荷物1個と身の回り品1個まで)`;
+    const b = c.items[0], sum = b.h + b.w + b.d;
+    if (b.h > 55 || b.w > 40 || b.d > 25) return `手荷物が${b.h}×${b.w}×${b.d}cmで、55×40×25cmを超えていた`;
+    if (sum > 115) return `手荷物の3辺の合計が${sum}cmで、115cmを超えていた`;
+    if (c.kg > 10) return `持ち込む荷物が合わせて${c.kg.toFixed(1)}kgで、10kgを超えていた`;
+    return null;
   },
   bagNeed(weight, allowance) {
     if (weight > DATA.rules.maxPiece) return 'repack';
@@ -1477,6 +1624,21 @@ const Gen = {
     return U.digits(9);
   },
 
+  // 機内持ち込み手荷物(ふつうは制限内。ぎりぎりのものも混ぜる)
+  carryItem(kind, small) {
+    kind = kind || U.weighted(['roller', 'backpack', 'tote'], [5, 3.5, 1.5]);
+    const tight = !small && U.chance(0.35);
+    let h, w, d;
+    if (kind === 'roller') { h = tight ? 55 : U.int(46, 55); w = U.int(34, 40); d = U.int(20, 25); }
+    else if (kind === 'backpack') { h = U.int(40, small ? 46 : 52); w = U.int(28, 36); d = U.int(14, 23); }
+    else { h = U.int(30, 40); w = U.int(36, 40); d = U.int(12, 18); }
+    while (h + w + d > 115) { if (d > 18) d--; else w--; }
+    return { kind, h, w, d, color: U.pick(['#2c3e57', '#3c3f44', '#7d2f2f', '#2f6a4f', '#6b5b95', '#a87a2e', '#4a6b8a']) };
+  },
+  carry() {
+    if (!U.chance(0.85)) return null;
+    return { items: [this.carryItem()], personal: U.chance(0.55), kg: U.r1(U.chance(0.25) ? U.float(9.2, 10) : U.float(2.5, 9)) };
+  },
   bag(allowance) {
     return { weight: U.r1(U.float(Math.max(5, allowance - 11), allowance - 0.4)), battery: false, color: U.pick(['#c0392b', '#2f6fdb', '#2b2f36', '#e0a526', '#6a8f3a', '#8b52c9', '#9aa4ad']) };
   },
@@ -1560,7 +1722,7 @@ const Gen = {
       bag: U.chance(ctx.cfg.bagRate || (f.intl ? 0.85 : 0.65)) ? this.bag(allowance) : null,
       seatReq: ctx.cfg.exitReq && U.chance(ctx.cfg.exitReq) ? 'exit' : U.pick([null, null, 'window', 'aisle', 'front']),
       esta: f.ap.entry === 'ESTA' && nat !== 'US' ? { status: 'approved', until: U.addDays(ctx.date, U.int(30, 700)) } : null,
-      arrival: 0, issue: null,
+      arrival: 0, issue: null, carry: this.carry(),
     };
     this.setAge(p, U.int(19, 78), ctx.date);
     if (cls === 'J' && (p.seatReq === 'front' || p.seatReq === 'exit')) p.seatReq = null; // J は前方。非常口はエコノミーの8列目
@@ -1978,6 +2140,68 @@ const Flap = {
   },
 };
 
+/* ===== 05-art2.js ===== */
+/* ---------- 絵(追加分):機内持ち込みのサイズ確認器・忘れ物のアイコン ---------- */
+Object.assign(Art, {
+  // サイズ確認器。高さ55×幅40cm の枠の前に手荷物を置いた絵。はみ出した部分が枠の外に見える
+  sizer(b) {
+    const S = 2, x0 = 10, base = 145, fw = 40 * S, fh = 55 * S;
+    const w = b.w * S, h = b.h * S, x = x0, y = base - h;
+    let bag;
+    if (b.kind === 'backpack') {
+      bag = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="16" fill="${b.color}"/>
+        <rect x="${x + w * 0.18}" y="${y + h * 0.52}" width="${w * 0.64}" height="${h * 0.34}" rx="8" fill="rgba(0,0,0,.18)"/>
+        <path d="M${x + w * 0.3} ${y + 6} V${y + h * 0.45} M${x + w * 0.7} ${y + 6} V${y + h * 0.45}" stroke="rgba(255,255,255,.25)" stroke-width="3"/>`;
+    } else if (b.kind === 'tote') {
+      bag = `<path d="M${x + w * 0.28} ${y + 14} Q${x + w * 0.5} ${y - 2} ${x + w * 0.72} ${y + 14}" fill="none" stroke="${b.color}" stroke-width="4"/>
+        <rect x="${x}" y="${y + 12}" width="${w}" height="${h - 12}" rx="4" fill="${b.color}"/>`;
+    } else {
+      bag = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="${b.color}"/>
+        <rect x="${x + w * 0.32}" y="${y + 3}" width="${w * 0.36}" height="6" rx="3" fill="rgba(0,0,0,.35)"/>
+        <path d="M${x + w * 0.25} ${y + 14} V${base - 10} M${x + w * 0.5} ${y + 14} V${base - 10} M${x + w * 0.75} ${y + 14} V${base - 10}" stroke="rgba(0,0,0,.18)" stroke-width="3"/>
+        <circle cx="${x + 9}" cy="${base - 4}" r="3.5" fill="#1d2025"/><circle cx="${x + w - 9}" cy="${base - 4}" r="3.5" fill="#1d2025"/>`;
+    }
+    const over = b.h > 55 || b.w > 40;
+    return `<svg viewBox="0 0 120 152" class="sizer ${over ? 'over' : ''}" aria-hidden="true">
+      <rect x="${x0}" y="${base - fh}" width="${fw}" height="${fh}" fill="#e8ecf0"/>
+      <path d="M${x0} ${base - fh + 20} H${x0 + fw} M${x0} ${base - fh + 50} H${x0 + fw} M${x0} ${base - fh + 80} H${x0 + fw}" stroke="#d3d9df" stroke-width="1"/>
+      ${bag}
+      <path d="M${x0 - 2} ${base} V${base - fh - 2} H${x0 + fw + 2} V${base}" fill="none" stroke="#5d6772" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="${x0 - 6}" y="${base}" width="${fw + 12}" height="5" rx="2" fill="#5d6772"/>
+      <text x="${x0 + fw + 7}" y="${base - fh + 8}" class="sz-t">55</text><text x="${x0 + fw / 2}" y="${base - fh - 6}" class="sz-t" text-anchor="middle">40</text>
+    </svg>`;
+  },
+
+  // 忘れ物のアイコン(色と特徴も絵に出す)
+  lostItem(kind, color, mark) {
+    const dark = color === '#f2f2ee' || color === '#e2bd1c' || color === '#f08db5';
+    const ln = dark ? '#3b3f45' : 'rgba(255,255,255,.55)', st = color === '#f2f2ee' ? 'stroke="#8d949b" stroke-width="1.5"' : '';
+    const shapes = {
+      wallet: `<rect x="5" y="11" width="30" height="20" rx="3" fill="${color}" ${st}/><path d="M5 17 H35" stroke="${ln}" stroke-width="1.6"/><circle cx="29" cy="21" r="2.2" fill="${ln}"/>`,
+      phone: `<rect x="12" y="3" width="16" height="34" rx="3.5" fill="${color}" ${st}/><rect x="14.5" y="7" width="11" height="23" rx="1" fill="#9fb4c8"/><circle cx="20" cy="33.4" r="1.4" fill="${ln}"/>`,
+      umbrella: `<path d="M15 6 Q20 2 25 6 L23 30 H17 Z" fill="${color}" ${st}/><path d="M18 8 L19 29 M22 8 L21 29" stroke="${ln}" stroke-width="1"/><path d="M20 30 V35 Q20 38 17 37" fill="none" stroke="#3b3f45" stroke-width="2.4" stroke-linecap="round"/>`,
+      cap: `<path d="M7 26 Q7 9 21 9 Q33 9 33 26 Z" fill="${color}" ${st}/><path d="M5 26 H37 Q36 31 27 30 H7 Z" fill="${color}" ${st}/><circle cx="21" cy="9.5" r="1.6" fill="${ln}"/>`,
+      plush: `<circle cx="11" cy="11" r="5" fill="${color}" ${st}/><circle cx="29" cy="11" r="5" fill="${color}" ${st}/><circle cx="20" cy="22" r="13" fill="${color}" ${st}/><circle cx="15.5" cy="20" r="1.6" fill="#22262b"/><circle cx="24.5" cy="20" r="1.6" fill="#22262b"/><ellipse cx="20" cy="26" rx="4" ry="3" fill="rgba(255,255,255,.55)"/>`,
+      earphones: `<rect x="8" y="13" width="24" height="17" rx="8" fill="${color}" ${st}/><path d="M8 20 H32" stroke="${ln}" stroke-width="1.4"/><circle cx="14" cy="9" r="3.5" fill="#f2f2ee" stroke="#8d949b"/><circle cx="26" cy="9" r="3.5" fill="#f2f2ee" stroke="#8d949b"/>`,
+      keys: `<circle cx="13" cy="14" r="7" fill="none" stroke="#9ba3ab" stroke-width="2.6"/><path d="M18 19 L32 33 M27 28 L30 25 M30 31 L33 28" stroke="${color === '#f2f2ee' ? '#9ba3ab' : color}" stroke-width="3.4" stroke-linecap="round"/>`,
+      book: `<rect x="8" y="6" width="24" height="29" rx="2" fill="${color}" ${st}/><path d="M12 6 V35" stroke="${ln}" stroke-width="1.6"/><rect x="16" y="12" width="12" height="4" rx="1" fill="${ln}"/>`,
+      scarf: `<path d="M8 9 Q20 3 32 9 L30 17 Q20 12 10 17 Z" fill="${color}" ${st}/><path d="M20 13 L16 33 H23 L25 14" fill="${color}" ${st}/><path d="M16 33 V37 M18 33 V37 M20 33 V37 M22 33 V37" stroke="${color === '#f2f2ee' ? '#8d949b' : color}" stroke-width="1.2"/>`,
+      watch: `<rect x="15" y="3" width="10" height="34" rx="3" fill="${color}" ${st}/><circle cx="20" cy="20" r="8.5" fill="#d9dde1" stroke="#5d6772" stroke-width="2"/><path d="M20 20 V15 M20 20 H24" stroke="#22262b" stroke-width="1.5" stroke-linecap="round"/>`,
+      glasses: `<rect x="5" y="13" width="30" height="14" rx="7" fill="${color}" ${st}/><path d="M7 20 H33" stroke="${ln}" stroke-width="1.2"/>`,
+      pouch: `<path d="M8 13 H32 L34 32 Q34 34 32 34 H8 Q6 34 6 32 Z" fill="${color}" ${st}/><path d="M8 13 H32" stroke="#c9a23a" stroke-width="2.4"/><circle cx="31" cy="13" r="1.8" fill="#c9a23a"/>`,
+    };
+    const marks = {
+      'キーホルダー付き': '<circle cx="34" cy="7" r="3.6" fill="#f2b33d" stroke="#8a5f12" stroke-width="1"/><path d="M31.5 9.5 L28 12" stroke="#8a5f12" stroke-width="1.2"/>',
+      '名前のシール付き': '<rect x="22" y="31" width="14" height="6" rx="1" fill="#fff" stroke="#8d949b" stroke-width=".8"/><path d="M24 34 H33" stroke="#555" stroke-width=".8"/>',
+      '星の模様': `<path d="M30 25 l1.4 3 3.2.4-2.4 2.2.6 3.2-2.8-1.6-2.8 1.6.6-3.2-2.4-2.2 3.2-.4z" fill="${dark ? '#3b3f45' : '#ffe27a'}"/>`,
+      'しま模様': `<path d="M4 12 L14 2 M4 22 L24 2 M4 32 L34 2" stroke="${dark ? 'rgba(0,0,0,.25)' : 'rgba(255,255,255,.35)'}" stroke-width="2.2" clip-path="url(#lc)"/>`,
+      'ステッカー付き': '<circle cx="30" cy="30" r="5" fill="#3cc6e8" stroke="#fff" stroke-width="1.4"/>',
+      '無地': '',
+    };
+    return `<svg viewBox="0 0 40 40" class="lost-ico" aria-hidden="true"><defs><clipPath id="lc"><rect x="4" y="4" width="32" height="32" rx="4"/></clipPath></defs>${shapes[kind] || shapes.pouch}${marks[mark] || ''}</svg>`;
+  },
+});
+
 /* ===== 06-sys.js ===== */
 /* ---------- セーブ ---------- */
 const Store = {
@@ -2263,11 +2487,10 @@ const Fit = {
 const Progress = {
   // 昇進して解放された仕事か
   unlocked(job, total = Store.data.total) { return DATA.ranks.some((r) => r.unlock === job && total >= r.min); },
-  // その日、カウンターとゲートの間に入る仕事(2つとも解放されたら日替わり)
+  // その日、カウンターとゲートの間に入る仕事(解放された仕事を日替わりで)
   midFor(n) {
     const un = Object.keys(DATA.jobs).filter((j) => this.unlocked(j));
-    if (!un.length) return null;
-    return un.length === 1 ? un[0] : un[n % 2];
+    return un.length ? un[n % un.length] : null;
   },
   // 特別な日:9日目から3日ごと
   eventFor(n) {
@@ -2667,8 +2890,20 @@ Scenes.counter = {
     const pp = p.flight.intl
       ? (p.passport ? Docs.passport(p.passport, p.av, p.photoAv) : '<div class="doc missing"><b>パスポートの提示なし</b><small>NO PASSPORT</small></div>')
       : '<div class="doc note"><b>国内線</b><small>パスポートの確認は不要</small></div>';
-    desk.innerHTML = `<div class="docs">${pp}${Docs.ticket(p)}</div><div class="scale-area"><div id="scale"></div>${p.svc === 'minor' ? Docs.minorForm(p) : ''}</div><div class="printed" id="printed"></div>`;
+    desk.innerHTML = `<div class="docs">${pp}${Docs.ticket(p)}</div><div class="scale-area"><div id="scale"></div>${this.carryHTML(p)}${p.svc === 'minor' ? Docs.minorForm(p) : ''}</div><div class="printed" id="printed"></div>`;
     this.renderScale(false);
+  },
+
+  // 機内持ち込み手荷物(3日目から)。サイズ確認器の絵と、寸法・重さ
+  carryHTML(p) {
+    if (Game.day.n < 3 || !p.carry || p.rebook) return '';
+    const c = p.carry, KN = { roller: 'キャリーケース', backpack: 'リュック', tote: 'トートバッグ' };
+    return `<div class="carry-card ${p.carryCheck ? 'checked' : ''} ${c.items.length > 1 ? 'multi' : ''}" id="carry">
+      <div class="carry-pics">${c.items.map((b) => Art.sizer(b)).join('')}</div>
+      <div class="carry-info"><header><b>機内持ち込み</b><small>高さ×幅×奥行</small></header>
+        ${c.items.map((b, i) => `<div class="carry-dim"><small>${KN[b.kind]}${c.items.length > 1 ? ` ${i + 1}` : ''}<span class="hw">(高さ×幅×奥行)</span></small><b>${b.h}×${b.w}×${b.d}<span>cm</span></b></div>`).join('')}
+        <div class="carry-foot"><span>身の回り品 <b>${c.personal ? '1個' : 'なし'}</b></span><span>合計 <b>${c.kg.toFixed(1)}kg</b></span></div></div>
+      ${p.carryCheck ? '<div class="carry-stamp">お預かり</div>' : ''}</div>`;
   },
 
   renderScale(anim) {
@@ -2751,7 +2986,8 @@ Scenes.counter = {
 
   termBag(p) {
     const n = Game.day.n, bs = p.bs;
-    if (!p.bag) return `${this.booking(p)}<p class="sub-h">預けるスーツケースはありません。</p>${this.svcBox(p)}<div class="acts"><button class="btn primary" data-act="bag-none">座席の指定へ</button></div>`;
+    const carry = n >= 3 && p.carry ? `<div class="opt-row"><small>機内持ち込み</small><button class="btn small tog" data-act="carry" aria-pressed="${!!p.carryCheck}">持ち込めない荷物を預かる</button>${n === 3 ? '<span class="mute small">55×40×25cm・合計115cm・10kg・1個まで</span>' : ''}</div>` : '';
+    if (!p.bag) return `${this.booking(p)}<p class="sub-h">預けるスーツケースはありません。</p>${carry}${this.svcBox(p)}<div class="acts"><button class="btn primary" data-act="bag-none">座席の指定へ</button></div>`;
     const tag = n >= 7 ? `<div class="opt-row"><small>荷物の行き先</small>
         <button class="btn small tog" data-act="tag" data-v="dest" aria-pressed="${!p.tagThrough}">${p.flight.dest} ${p.flight.ap.name}まで</button>
         <button class="btn small tog" data-act="tag" data-v="conn" aria-pressed="${p.tagThrough}">乗り継ぎ先まで</button></div>` : '';
@@ -2762,7 +2998,7 @@ Scenes.counter = {
         ${n >= 2 ? `<button class="btn" data-act="ask" ${bs.asked ? 'disabled' : ''}>${bs.asked ? '危険物 確認済み' : '危険物を確認する'}</button>` : ''}
       </div>
       ${bs.revealed && bs.battery ? '<div class="acts"><button class="btn warn" data-act="battery">バッテリーを取り出してもらう</button></div>' : ''}
-      ${tag}${this.svcBox(p)}
+      ${tag}${carry}${this.svcBox(p)}
       ${bs.weighed
         ? `<div class="acts row3">
           <button class="btn primary" data-act="bag-accept">このまま預かる</button>
@@ -2816,7 +3052,8 @@ Scenes.counter = {
       case 'bag-accept': this.bagDecide('accept'); break;
       case 'bag-fee': this.bagDecide('fee'); break;
       case 'bag-repack': this.bagDecide('repack'); break;
-      case 'bag-none': this.evalSvc(p); this.toSeat(DATA.staff.noBag); break;
+      case 'bag-none': this.evalSvc(p); this.evalCarry(p); this.toSeat(DATA.staff.noBag); break;
+      case 'carry': this.toggleCarry(); break;
       case 'esta': if (!p.estaShown) { p.estaShown = true; this.talk(DATA.staff.estaQ, null); this.renderTerm(); } break;
       case 'svc': this.toggleSvc(ds.k); break;
       case 'tag': p.tagThrough = ds.v === 'conn'; this.renderTerm(); break;
@@ -2856,6 +3093,25 @@ Scenes.counter = {
       else if (want) { p.res.bad.push(DATA.svc[k].miss); p.res.pts += SC.svcMiss; Game.decision(false); }
       else if (got) { p.res.bad.push(`必要のない「${DATA.svc[k].label}」をしてしまった`); p.res.pts += SC.svcExtra; Game.decision(false); }
     }
+  },
+
+  // 機内持ち込み手荷物を預かりに回す(押すたびに切り替え)
+  toggleCarry() {
+    const p = this.s.cur; if (!p || !p.carry || this.s.step !== 'bag') return;
+    p.carryCheck = !p.carryCheck;
+    if (p.carryCheck) { this.talk(DATA.staff.carry, null); Sfx.pop(); }
+    const el = document.getElementById('carry'); if (el) el.outerHTML = this.carryHTML(p);
+    this.renderTerm();
+  },
+
+  // 機内持ち込み手荷物の採点(3日目から。手荷物の画面を出るときに1回)
+  evalCarry(p) {
+    if (p.carryEvaluated || Game.day.n < 3 || !p.carry) return;
+    p.carryEvaluated = true;
+    const SC = CONFIG.score, prob = Rules.carryProblem(p);
+    if (prob && p.carryCheck) { p.res.good.push(`持ち込めない手荷物をお預かりした(${prob})`); p.res.pts += SC.carryRight; Game.decision(true); }
+    else if (prob) { p.res.bad.push(`${prob}のに、そのまま機内に持ち込ませた`); p.res.pts += SC.carryMiss; Game.decision(false); }
+    else if (p.carryCheck) { p.res.bad.push('機内に持ち込める手荷物まで預からせてしまった'); p.res.pts += SC.carryExtra; Game.decision(false); Game.addSat(-4); }
   },
 
   // 荷物の行き先の採点(7日目から)
@@ -2957,7 +3213,7 @@ Scenes.counter = {
     }
     if (bs.battery) bad('モバイルバッテリーが入ったまま預かってしまった');
     p.bagAccepted = true;
-    this.evalTag(p); this.evalSvc(p);
+    this.evalTag(p); this.evalSvc(p); this.evalCarry(p);
     this.toSeat(kind === 'fee' ? DATA.staff.fee : DATA.staff.accept, reply);
   },
 
@@ -3739,6 +3995,424 @@ Scenes.baggage = {
     Modal.show({
       title: '手荷物の仕分け 終了',
       body: `<div class="sumgrid three"><div><small>正しく仕分け</small><b>${s.ok}/${this.N}</b></div><div><small>正確さ</small><b>${acc}%</b></div><div><small>ここでの点数</small><b>${U.fmt(Game.day.score.mid)}</b></div></div>
+        <p>次は <b>${gf.gate}番搭乗口</b> で <b>${gf.no}</b> の搭乗案内です。</p>`,
+      actions: [{ label: `${gf.gate}番搭乗口へ向かう`, cls: 'primary', run: () => Game.go('gate') }],
+    });
+  },
+};
+
+/* ===== 47-reserve.js ===== */
+/* ---------- 予約カウンター(グランドスタッフに昇進すると加わる仕事) ----------
+   お客様の希望(日付・人数・時間・運賃)を聞いて、検索結果の表から正しい便と運賃を選ぶ */
+Scenes.reserve = {
+  timed: true,
+  N: 6,
+  FARES: [
+    { k: 'flex', name: 'フレックス', note: '変更できる', ahead: 0 },
+    { k: 'value', name: 'バリュー', note: '3日前まで', ahead: 3 },
+    { k: 'super', name: 'スーパーバリュー', note: '21日前まで', ahead: 21 },
+  ],
+  BASE: { FUK: 41000, OKA: 44000, CTS: 39000, ITM: 26000, KOJ: 40000 },
+  NUM: { FUK: 300, OKA: 100, CTS: 200, ITM: 400, KOJ: 500 },
+  SLOTS: ['07:05', '08:40', '10:15', '11:50', '13:30', '15:10', '17:20', '19:05'],
+  TIME: {
+    any: { text: '', memo: '指定なし', ok: () => true },
+    am: { text: '午前中に出発する便で。', memo: '午前中に出発(12時より前)', ok: (f) => f.dep < U.t('12:00') },
+    pm: { text: 'お昼過ぎの出発がいいです。', memo: '12時以降に出発', ok: (f) => f.dep >= U.t('12:00') },
+    eve: { text: '仕事のあとなので、17時以降の出発で。', memo: '17時以降に出発', ok: (f) => f.dep >= U.t('17:00') },
+    by: { text: '', memo: '', ok: (f, q) => f.arr <= q.by },
+  },
+  PREF: {
+    cheap: { text: 'できるだけ安くお願いします。', memo: 'できるだけ安く' },
+    flex: { text: '予定が変わるかもしれないので、あとで変更できるきっぷがいいです。', memo: 'あとで変更できる運賃' },
+    early: { text: 'できるだけ早く着きたいです。', memo: '到着がいちばん早い便' },
+  },
+
+  /* ===== 問題づくり ===== */
+  // 1日ぶんの時刻表と運賃・残席
+  table(dest, date, k) {
+    const block = (DATA.blockMin[dest] || 100) * 60, base = this.BASE[dest] || 35000;
+    const idx = U.shuffle(this.SLOTS.map((_, i) => i)).slice(0, 5).sort((a, b) => a - b);
+    return idx.map((si, i) => {
+      const dep = U.t(this.SLOTS[si]), hour = Math.floor(dep / 3600);
+      const peak = hour < 9 || hour >= 17 ? 1.12 : hour >= 11 && hour < 15 ? 0.94 : 1;
+      const flex = Math.round(base * peak * U.float(0.97, 1.05) / 100) * 100 + i * 30;
+      const value = Math.round(flex * U.float(0.56, 0.66) / 100) * 100 + i * 20;
+      const sup = Math.round(flex * U.float(0.36, 0.44) / 100) * 100 + i * 10;
+      // 残席は「安い運賃ほど少ない」入れ子(フレックスの残席がその便の空席)
+      const all = U.weighted([0, U.int(1, 3), U.int(4, 8), U.int(9, 20)], [1, 3, 3, 3]);
+      const sv = Math.min(all, U.weighted([0, 1, 2, U.int(3, 6)], [3, 2, 2, 2]));
+      const sp = Math.min(sv, U.weighted([0, 1, 2, U.int(3, 5)], [4, 2, 2, 1]));
+      return {
+        no: `TB ${this.NUM[dest] + 11 + si * 2}`, dep, arr: dep + block,
+        fares: {
+          flex: { price: flex, seats: all, open: true },
+          value: { price: value, seats: sv, open: k >= 3 },
+          super: { price: sup, seats: sp, open: k >= 21 },
+        },
+      };
+    });
+  },
+
+  // 条件に合う運賃か
+  fits(q, di, f, r) {
+    const c = f.fares[r];
+    return di === q.di && c.open && c.seats >= q.n && this.TIME[q.time].ok(f, q) && (q.pref !== 'flex' || r === 'flex');
+  },
+
+  // 正解(なければ null)
+  solve(q) {
+    const cand = [];
+    q.days[q.di].flights.forEach((f, fi) => { for (const F of this.FARES) if (this.fits(q, q.di, f, F.k)) cand.push({ fi, r: F.k, f, price: f.fares[F.k].price }); });
+    if (!cand.length) return null;
+    if (q.pref === 'early') cand.sort((a, b) => (a.f.arr - b.f.arr) || (a.price - b.price));
+    else cand.sort((a, b) => a.price - b.price);
+    if (cand.length > 1 && q.pref !== 'early' && cand[0].price === cand[1].price) return 'tie';
+    return { di: q.di, fi: cand[0].fi, r: cand[0].r };
+  },
+
+  gen(d) {
+    const dests = Object.keys(this.BASE), out = [];
+    for (let i = 0; i < this.N; i++) {
+      const wantNone = i > 0 && U.chance(0.17);
+      let q = null;
+      for (let tries = 0; tries < 80; tries++) {
+        const dest = U.pick(dests), k = U.chance(0.55) ? U.int(22, 45) : U.int(2, 20);
+        const di = U.int(0, 2), date = U.addDays(d.date, k);
+        const dates = [-1, 0, 1].map((x) => U.addDays(date, x - (di - 1)));
+        const c = {
+          dest, date, di, n: U.weighted([1, 2, 3, 4], [4, 3.5, 1.5, 1]),
+          time: U.weighted(['any', 'am', 'pm', 'eve', 'by'], [2.5, 2, 2, 1.5, 2]),
+          pref: U.weighted(['cheap', 'flex', 'early'], [5.5, 2, 2.5]),
+          days: dates.map((dt) => ({ date: dt, flights: this.table(dest, dt, Math.round((U.D(dt) - U.D(d.date)) / 864e5)) })),
+        };
+        if (c.time === 'by') {
+          const arrs = c.days[c.di].flights.map((f) => f.arr).sort((a, b) => a - b);
+          c.by = Math.ceil((arrs[U.int(1, 3)] + 600) / 1800) * 1800;
+        }
+        const ans = this.solve(c);
+        if (ans === 'tie') continue;
+        if (wantNone ? ans !== null : ans === null) continue;
+        // 条件を見落とすと間違えるような問題を多めにする
+        if (ans && tries < 40) {
+          const naive = this.naive(c);
+          if (naive && naive.fi === ans.fi && naive.r === ans.r && U.chance(0.7)) continue;
+        }
+        q = c; q.ans = ans; break;
+      }
+      if (!q) continue;
+      const per = Gen.person('JP');
+      out.push({ ...per, id: Gen.uid++, kind: 'pax', title: per.sex === 'M' ? 'MR' : 'MS', age: U.int(22, 74), q, tab: 0, sel: null });
+    }
+    return out;
+  },
+
+  // 日付だけ合わせて、いちばん安い運賃を選んだ場合(条件の見落とし)
+  naive(q) {
+    let best = null;
+    q.days[q.di].flights.forEach((f, fi) => { for (const F of this.FARES) { const c = f.fares[F.k]; if (c.open && c.seats > 0 && (!best || c.price < best.price)) best = { fi, r: F.k, price: c.price }; } });
+    return best;
+  },
+
+  /* ===== 表示 ===== */
+  timeText(q) { return q.time === 'by' ? `${U.hm(q.by)}までに着きたいです。` : this.TIME[q.time].text; },
+  timeMemo(q) { return q.time === 'by' ? `${U.hm(q.by)}までに到着` : this.TIME[q.time].memo; },
+
+  enter() {
+    const d = Game.day;
+    this.s = { guests: this.gen(d), idx: 0, cur: null, busy: false, ok: 0, ng: 0 };
+    if (!Store.data.jobSeen.reserve) { Store.data.jobSeen.reserve = true; Store.save(); }
+    document.getElementById('app').innerHTML = Hud.frame(`<div class="job-scene reserve-scene">
+      <section class="panel job-rules" aria-label="予約のルール">
+        <header class="ph"><b>予約のルール</b><small>RESERVATIONS</small></header>
+        <ul class="rule-list">
+          <li><b>日付</b>タブをお客様の日付に合わせる</li>
+          <li><b>人数</b>運賃の残席が人数分あること</li>
+          <li><b>時間</b>出発・到着時刻の希望に合う便</li>
+          <li><b>安く</b>条件に合う中でいちばん安い運賃</li>
+          <li><b>変更できる</b>フレックスでいちばん安いもの</li>
+          <li><b>早く着く</b>到着がいちばん早い便の最安運賃</li>
+          <li><b>合う便がない</b>「便がない」と伝える</li>
+        </ul>
+        <div class="job-prog" id="jprog"></div>
+      </section>
+      <section class="g-center">
+        <div class="g-sign job-sign"><div class="gs-num reserve"><small>DESK</small>予</div><div class="gs-info"><div class="gs-flight">予約カウンター</div><div class="gs-dest">RESERVATIONS <span>今日は${U.jpShort(d.date)}</span></div></div></div>
+        <div class="reader rs-reader" id="reader" aria-live="polite"></div>
+        <div class="acts g-acts" id="jacts"></div>
+      </section>
+      <section class="panel job-log" aria-label="対応の記録"><header class="ph"><b>対応の記録</b><small>LOG</small></header><ul class="mini-log" id="jlog"></ul></section>
+    </div>`);
+    this.next();
+    Toast.show('予約カウンターです。お客様の希望に合う便と運賃を探しましょう', 'info', 3800);
+  },
+
+  next() {
+    const s = this.s;
+    s.cur = s.guests[s.idx] || null; s.busy = false;
+    if (!s.cur) { this.finish(); return; }
+    this.render();
+  },
+
+  render(outKind, staff) {
+    const s = this.s, g = s.cur, el = document.getElementById('reader'), N = s.guests.length;
+    document.getElementById('jprog').innerHTML = `<div class="g-count"><b>${Math.min(s.idx + 1, N)}</b><span>/ ${N}人目</span></div><p class="small">正解 ${s.ok} · ミス ${s.ng}</p>`;
+    if (!el || !g) return;
+    const q = g.q, day = q.days[g.tab], dis = s.busy ? 'disabled' : '';
+    const selF = g.sel ? q.days[g.sel.di].flights[g.sel.fi] : null;
+    document.getElementById('jacts').innerHTML = `<button class="btn primary" data-act="book" ${g.sel && !s.busy ? '' : 'disabled'}>${g.sel ? `${selF.no} ${this.FARES.find((F) => F.k === g.sel.r).name}で予約` : '便と運賃を選んでください'}</button>
+      <button class="btn danger" data-act="none" ${dis}>ご希望の便がないと伝える</button>`;
+    const dest = DATA.airports[q.dest].name;
+    const mood = outKind === 'bad' ? 'sad' : outKind ? 'happy' : 'neutral';
+    const bubble = staff ? `<div class="bubble staff mini"><span class="who">あなた</span>${U.esc(staff)}</div>`
+      : `<div class="bubble mini">${U.esc(`${U.jpShort(q.date)}に${dest.replace(/\(.*\)/, '')}まで、${q.n}人分の予約をお願いします。`)}</div>`;
+    const cell = (f, fi, F) => {
+      const c = f.fares[F.k], on = g.sel && g.sel.di === g.tab && g.sel.fi === fi && g.sel.r === F.k;
+      if (!c.open) return '<td><span class="rs-cell off">受付終了</span></td>';
+      if (c.seats <= 0) return '<td><span class="rs-cell off">満席</span></td>';
+      return `<td><button class="rs-cell ${on ? 'sel' : ''}" data-act="cell" data-fi="${fi}" data-r="${F.k}" aria-pressed="${on}" ${dis}><b>¥${U.fmt(c.price)}</b><small>残${c.seats >= 9 ? '9+' : c.seats}</small></button></td>`;
+    };
+    el.innerHTML = `<div class="rs-left">
+        <div class="reader-pax">${Art.figure(g, mood)}${bubble}</div>
+        <dl class="rs-memo"><div><dt>行き先</dt><dd>${dest}</dd></div><div><dt>日付</dt><dd>${U.jpShort(q.date)}</dd></div><div><dt>人数</dt><dd>大人${q.n}名</dd></div><div><dt>時間</dt><dd>${this.timeMemo(q)}</dd></div><div><dt>希望</dt><dd>${this.PREF[q.pref].memo}</dd></div></dl>
+      </div>
+      <div class="rs-right">
+        <div class="rs-tabs" role="tablist">${q.days.map((x, i) => `<button class="rs-tab" role="tab" data-act="tab" data-i="${i}" aria-selected="${i === g.tab}" ${dis}>${U.jpShort(x.date)}</button>`).join('')}</div>
+        <p class="rs-head">${DATA.home.name} → ${dest} · ${U.jpShort(day.date)} · 大人1名の運賃</p>
+        <table class="rs-table"><thead><tr><th>便</th><th>時刻</th>${this.FARES.map((F) => `<th>${F.name}<small>${F.note}</small></th>`).join('')}</tr></thead>
+          <tbody>${day.flights.map((f, fi) => `<tr><td><b>${f.no}</b></td><td class="rs-time">${U.hm(f.dep)}<small>→${U.hm(f.arr)}</small></td>${this.FARES.map((F) => cell(f, fi, F)).join('')}</tr>`).join('')}</tbody></table>
+      </div>`;
+  },
+
+  onAct(a, ds) {
+    const s = this.s, g = s.cur; if (!g || s.busy) return;
+    if (a === 'tab') { g.tab = +ds.i; this.render(); }
+    else if (a === 'cell') { g.sel = { di: g.tab, fi: +ds.fi, r: ds.r }; Sfx.pop(); this.render(); }
+    else if (a === 'book' && g.sel) this.decide('book');
+    else if (a === 'none') this.decide('none');
+  },
+  onKey(e) { if (e.key === 'Enter' && this.s.cur && this.s.cur.sel) this.decide('book'); },
+
+  // 選んだ運賃がなぜ違うのか
+  whyWrong(q, sel) {
+    const f = q.days[sel.di].flights[sel.fi], c = f.fares[sel.r];
+    if (sel.di !== q.di) return `日付が違った(${U.jpShort(q.days[sel.di].date)}を予約した)`;
+    if (!this.TIME[q.time].ok(f, q)) return `時間の希望(${this.timeMemo(q)})に合わない便だった`;
+    if (c.seats < q.n) return `その運賃の残席が${q.n}名分なかった`;
+    if (q.pref === 'flex' && sel.r !== 'flex') return '変更できない運賃だった';
+    return q.pref === 'early' ? 'もっと早く着く便・安い運賃があった' : 'もっと安い運賃があった';
+  },
+  ansText(q) {
+    const a = q.ans; if (!a) return '';
+    const f = q.days[a.di].flights[a.fi], F = this.FARES.find((x) => x.k === a.r);
+    return `${U.jpShort(q.days[a.di].date)} ${f.no}(${U.hm(f.dep)}発) ${F.name} ¥${U.fmt(f.fares[a.r].price)}`;
+  },
+
+  decide(kind) {
+    const s = this.s, g = s.cur; if (!g || s.busy) return;
+    const q = g.q, a = q.ans;
+    let ok, why;
+    if (kind === 'none') { ok = !a; why = ok ? '条件に合う便がなかった' : `予約できる便があった。正しくは ${this.ansText(q)}`; }
+    else {
+      ok = !!a && g.sel.di === a.di && g.sel.fi === a.fi && g.sel.r === a.r;
+      why = ok ? this.ansText(q) : `${this.whyWrong(q, g.sel)}。${a ? `正しくは ${this.ansText(q)}` : '条件に合う便はなかった'}`;
+    }
+    const pts = ok ? 50 : -80, name = `${g.family} ${g.given}`, label = kind === 'none' ? '便がないと案内' : '予約';
+    Game.addScore('mid', pts); Game.decision(ok);
+    if (ok) { s.ok++; Sfx.good(); Toast.show(`<b>正解</b> ${U.esc(why)} <span class="pts">${U.signed(pts)}</span>`, 'ok', 2600); }
+    else { s.ng++; Game.addSat(-4); Sfx.buzz(); Toast.show(`<b>ミス</b> ${U.esc(why)} <span class="pts">${U.signed(pts)}</span>`, 'bad', 5200); }
+    Game.log({ area: 'mid', ok, name, flight: DATA.airports[q.dest].name.replace(/\(.*\)/, '') + '行き', text: ok ? `${label}(${why})` : why, pts });
+    document.getElementById('jlog').insertAdjacentHTML('afterbegin', `<li class="${ok ? 'ok' : 'bad'}"><span>${ok ? 'OK' : 'ミス'}</span>${U.esc(name)} · ${label}</li>`);
+    s.busy = true;
+    this.render(ok ? 'good' : 'bad', kind === 'none' ? DATA.staff.reserve.none : DATA.staff.reserve.ok);
+    setTimeout(() => { if (Game.scene !== this) return; s.idx++; this.next(); }, ok ? 700 : 1300);
+  },
+
+  update(dt) { Hud.tick(dt, 0); },
+
+  finish() {
+    const s = this.s, gf = Game.day.gateFlight;
+    Modal.show({
+      title: '予約カウンター 終了',
+      body: `<div class="sumgrid three"><div><small>正解</small><b>${s.ok}</b></div><div><small>ミス</small><b>${s.ng}</b></div><div><small>ここでの点数</small><b>${U.fmt(Game.day.score.mid)}</b></div></div>
+        <p>次は <b>${gf.gate}番搭乗口</b> で <b>${gf.no}</b> の搭乗案内です。</p>`,
+      actions: [{ label: `${gf.gate}番搭乗口へ向かう`, cls: 'primary', run: () => Game.go('gate') }],
+    });
+  },
+};
+
+/* ===== 48-lost.js ===== */
+/* ---------- 忘れ物センター(中堅スタッフに昇進すると加わる仕事) ----------
+   お客様の話(品物・色・特徴・場所・時刻)と、見つかった物の記録を見比べて、持ち主の物を探す。
+   保管場所が当空港ならお渡し、ほかの空港なら取り寄せ、どれも違えば「届いていない」 */
+Scenes.lost = {
+  timed: true,
+  N: 6,
+  KINDS: { wallet: '財布', phone: 'スマートフォン', umbrella: '折りたたみ傘', cap: '帽子', plush: 'ぬいぐるみ', earphones: 'イヤホン', keys: '鍵', book: '本', scarf: 'マフラー', watch: '腕時計', glasses: 'メガネケース', pouch: 'ポーチ' },
+  COLORS: { 黒: '#24272b', 紺: '#1f3260', 茶色: '#7a4a25', 赤: '#c8342f', 白: '#f2f2ee', 灰色: '#8b9096', ピンク: '#f08db5', 緑: '#2f8a4e', 黄色: '#e2bd1c' },
+  SIMILAR: { 黒: ['紺', '灰色'], 紺: ['黒', '緑'], 茶色: ['黒', '赤'], 赤: ['ピンク', '茶色'], 白: ['灰色', '黄色'], 灰色: ['白', '黒'], ピンク: ['赤', '白'], 緑: ['紺', '黄色'], 黄色: ['白', '茶色'] },
+  MARKS: { 'キーホルダー付き': 'キーホルダーが付いています。', '名前のシール付き': '名前のシールが貼ってあります。', '星の模様': '星の模様が入っています。', 'しま模様': 'しま模様です。', 'ステッカー付き': 'ステッカーが貼ってあります。', '無地': '模様のない、無地のものです。' },
+  SPOTS: ['保安検査場', '出発ロビーのベンチ', '到着ロビー', '2階のトイレ', 'ラウンジ', 'カフェの前'],
+
+  /* ===== 問題づくり ===== */
+  // 時刻は「今日の0時からの分」。マイナスは昨日
+  tm(t) { const d = t < 0 ? '昨日' : '今日'; const x = ((t % 1440) + 1440) % 1440; return `${d} ${U.pad(Math.floor(x / 60))}:${U.pad(x % 60)}`; },
+  whenText(t) { const x = ((t % 1440) + 1440) % 1440, h = Math.floor(x / 60); return t < 0 ? (h >= 17 ? `昨日の夜${h}時ごろ` : `昨日の${h}時ごろ`) : `今朝${h}時ごろ`; },
+
+  gen(d) {
+    const now = Math.floor(d.clock / 60), out = [], doms = Object.keys(DATA.airports).filter((k) => !DATA.airports[k].intl);
+    const kinds = Object.keys(this.KINDS), colors = Object.keys(this.COLORS), marks = Object.keys(this.MARKS);
+    for (let i = 0; i < this.N; i++) {
+      const kind = U.pick(kinds), color = U.pick(colors), mark = U.pick(marks);
+      const onBoard = U.chance(0.55), exists = i === 0 || !U.chance(0.2);
+      const r = { kind, color, mark };
+      let send = false;
+      if (onBoard) {
+        send = exists && U.chance(0.4);
+        const from = U.pick(doms), num = 300 + U.int(1, 40) * 2;
+        r.place = `TB ${num} 機内 ${U.int(3, 12)}${U.pick(['A', 'B', 'C', 'D', 'E', 'F'])}`;
+        r.t = send ? -U.int(150, 420) : U.chance(0.4) ? -U.int(180, 400) : U.int(Math.min(360, now - 90), now - 50);
+        r.from = DATA.airports[from].name.replace(/\(.*\)/, ''); r.flightNo = `TB ${num}`; r.seat = r.place.split(' ').pop();
+        r.next = U.pick(doms.filter((x) => x !== from));
+      } else {
+        r.place = U.pick(this.SPOTS);
+        r.t = U.chance(0.35) ? -U.int(120, 420) : U.int(Math.min(360, now - 100), now - 40);
+      }
+      // 見つかった物の記録
+      const rec = (o) => ({ no: 'L-' + U.digits(4), kind, color, mark, place: r.place, store: 'here', ...o });
+      const okT = () => r.t + (onBoard ? U.int(12, 45) : U.int(5, 35));
+      const target = exists ? rec({ found: send ? r.t + U.int(160, 260) : okT(), store: send ? r.next : 'here' }) : null;
+      const near = [
+        () => rec({ mark: U.pick(marks.filter((m) => m !== mark)), found: okT() }),
+        () => rec({ color: U.pick(this.SIMILAR[color]), found: okT() }),
+        () => rec({ place: onBoard ? (U.chance(0.5) ? `TB ${+r.flightNo.slice(3) + U.pick([-2, 2, 20])} 機内 ${r.seat}` : `${r.flightNo} 機内 ${Seats.row(r.seat) + U.pick([-2, 1, 10])}${Seats.col(r.seat)}`) : U.pick(this.SPOTS.filter((x) => x !== r.place)), found: okT() }),
+        () => rec({ found: r.t - U.int(60, 300) }),
+      ];
+      const recs = U.shuffle(near).slice(0, exists ? 3 : 4).map((f) => f());
+      recs.push(rec({ kind: U.pick(kinds.filter((k) => k !== kind)), color: U.pick(colors), mark: U.pick(marks), found: okT() }));
+      if (target) recs.push(target);
+      for (const x of recs) { if (x.found > now - 3) x.found = now - U.int(3, 12); if (x.store !== 'here' && x.found <= r.t) x.found = r.t + 180; }
+      const per = Gen.person(U.chance(0.15) ? U.pick(['US', 'KR', 'TW']) : 'JP');
+      out.push({ ...per, id: Gen.uid++, kind: 'pax', title: per.sex === 'M' ? 'MR' : 'MS', age: U.int(10, 76), r, onBoard, recs: U.shuffle(recs), target, sel: null });
+    }
+    return out;
+  },
+
+  // 記録がお客様の物か(違えば、その理由)
+  mismatch(g, x) {
+    const r = g.r, tol = g.onBoard ? 0 : 15;
+    if (x.kind !== r.kind) return `品物が違った(${this.KINDS[x.kind]})`;
+    if (x.color !== r.color) return `色が違った(${x.color})`;
+    if (x.mark !== r.mark) return `特徴が違った(${x.mark})`;
+    if (x.place !== r.place) return `見つかった場所が違った(${x.place})`;
+    if (x.found < r.t - tol) return `お客様がそこにいた時刻より前(${this.tm(x.found)})に見つかった物だった`;
+    return null;
+  },
+
+  /* ===== 表示 ===== */
+  enter() {
+    this.s = { guests: this.gen(Game.day), idx: 0, cur: null, busy: false, ok: 0, ng: 0 };
+    if (!Store.data.jobSeen.lost) { Store.data.jobSeen.lost = true; Store.save(); }
+    document.getElementById('app').innerHTML = Hud.frame(`<div class="job-scene lost-scene">
+      <section class="panel job-rules" aria-label="忘れ物の探し方">
+        <header class="ph"><b>探し方</b><small>LOST &amp; FOUND</small></header>
+        <ul class="rule-list">
+          <li><b>見比べる</b>品物・色・特徴・見つかった場所が、すべて合う物</li>
+          <li><b>時刻</b>お客様がそこにいた時刻より前に見つかった物は違う</li>
+          <li><b>当空港で保管</b>選んで「お渡しする」</li>
+          <li><b>ほかの空港で保管</b>選んで「取り寄せを手配」</li>
+          <li><b>どれも違う</b>「届いていない」</li>
+        </ul>
+        <div class="job-prog" id="jprog"></div>
+      </section>
+      <section class="g-center">
+        <div class="g-sign job-sign"><div class="gs-num lost"><small>DESK</small>?</div><div class="gs-info"><div class="gs-flight">忘れ物センター</div><div class="gs-dest">LOST &amp; FOUND <span>ただいま ${U.hm(Game.day.clock)}</span></div></div></div>
+        <div class="reader lf-reader" id="reader" aria-live="polite"></div>
+        <div class="acts g-acts" id="jacts"></div>
+      </section>
+      <section class="panel job-log" aria-label="対応の記録"><header class="ph"><b>対応の記録</b><small>LOG</small></header><ul class="mini-log" id="jlog"></ul></section>
+    </div>`);
+    this.next();
+    Toast.show('忘れ物センターです。お客様の話と記録を見比べて、持ち主の物を探しましょう', 'info', 3800);
+  },
+
+  next() {
+    const s = this.s;
+    s.cur = s.guests[s.idx] || null; s.busy = false;
+    if (!s.cur) { this.finish(); return; }
+    this.render();
+  },
+
+  say(g) {
+    const r = g.r, what = `${r.color}の${this.KINDS[r.kind]}`;
+    const where = g.onBoard ? `${this.whenText(r.t)}に${r.from}から着いた${r.flightNo}便の機内、${r.seat}の座席に${what}を忘れてしまいました。` : `${this.whenText(r.t)}、${r.place}で${what}をなくしてしまいました。`;
+    return where + this.MARKS[r.mark];
+  },
+
+  render(outKind, staff) {
+    const s = this.s, g = s.cur, el = document.getElementById('reader'), N = s.guests.length;
+    document.getElementById('jprog').innerHTML = `<div class="g-count"><b>${Math.min(s.idx + 1, N)}</b><span>/ ${N}人目</span></div><p class="small">正解 ${s.ok} · ミス ${s.ng}</p>`;
+    if (!el || !g) return;
+    const r = g.r, dis = s.busy ? 'disabled' : '', has = g.sel !== null && !s.busy;
+    document.getElementById('jacts').innerHTML = `<button class="btn primary" data-act="here" ${has ? '' : 'disabled'}>お渡しする</button>
+      <button class="btn" data-act="send" ${has ? '' : 'disabled'}>取り寄せを手配</button>
+      <button class="btn danger" data-act="none" ${dis}>届いていない</button>`;
+    const mood = outKind === 'bad' ? 'sad' : outKind ? 'happy' : 'neutral';
+    const bubble = staff ? `<div class="bubble staff mini"><span class="who">あなた</span>${U.esc(staff)}</div>` : `<div class="bubble mini">${U.esc(this.say(g))}</div>`;
+    el.innerHTML = `<div class="rs-left">
+        <div class="reader-pax">${Art.figure(g, mood)}${bubble}</div>
+        <dl class="rs-memo"><div><dt>品物</dt><dd>${this.KINDS[r.kind]}</dd></div><div><dt>色</dt><dd>${r.color}</dd></div><div><dt>特徴</dt><dd>${r.mark}</dd></div>
+          <div><dt>場所</dt><dd>${g.onBoard ? `${r.flightNo}便 機内 ${r.seat}` : r.place}</dd></div><div><dt>時刻</dt><dd>${g.onBoard ? `${this.tm(r.t)} 着` : `${this.tm(r.t).split(' ')[0]} ${this.whenText(r.t).replace(/^(昨日の夜|昨日の|今朝)/, '')}`}</dd></div></dl>
+      </div>
+      <div class="rs-right">
+        <p class="rs-head">見つかった物の記録(${g.recs.length}件)· 記録を選んでからボタンを押す</p>
+        <div class="lf-list" role="group" aria-label="見つかった物">${g.recs.map((x, i) => `<button class="lf-rec ${g.sel === i ? 'sel' : ''}" data-act="rec" data-i="${i}" aria-pressed="${g.sel === i}" ${dis}>
+          ${Art.lostItem(x.kind, this.COLORS[x.color], x.mark)}
+          <span class="lf-main"><b>${this.KINDS[x.kind]}</b> · ${x.color} · ${x.mark}</span>
+          <span class="lf-sub">${U.esc(x.place)} · ${this.tm(x.found)} 発見</span>
+          <span class="lf-store ${x.store === 'here' ? '' : 'away'}">${x.store === 'here' ? '当空港で保管' : `${DATA.airports[x.store].name.replace(/\(.*\)/, '')}空港で保管`}</span>
+          <span class="lf-no">${x.no}</span></button>`).join('')}</div>
+      </div>`;
+  },
+
+  onAct(a, ds) {
+    const s = this.s, g = s.cur; if (!g || s.busy) return;
+    if (a === 'rec') { g.sel = +ds.i; Sfx.pop(); this.render(); }
+    else if ((a === 'here' || a === 'send') && g.sel !== null) this.decide(a);
+    else if (a === 'none') this.decide('none');
+  },
+
+  answer(g) { return !g.target ? 'none' : g.target.store === 'here' ? 'here' : 'send'; },
+
+  decide(kind) {
+    const s = this.s, g = s.cur; if (!g || s.busy) return;
+    const ans = this.answer(g), t = g.target, x = kind === 'none' ? null : g.recs[g.sel];
+    const where = t && t.store !== 'here' ? `${DATA.airports[t.store].name.replace(/\(.*\)/, '')}空港` : '';
+    const right = t ? `正しくは ${t.no}(${ans === 'here' ? '当空港でお渡し' : `${where}から取り寄せ`})` : 'お客様の物は、まだ届いていなかった';
+    let ok = false, why;
+    if (kind === 'none') { ok = ans === 'none'; why = ok ? '似た物はあったが、お客様の物はまだ届いていなかった' : `お客様の物が届いていた。${right}`; }
+    else if (x !== t) { why = `${x.no}は${this.mismatch(g, x) || 'お客様の物ではなかった'}。${right}`; }
+    else if (kind !== ans) { why = ans === 'here' ? `${t.no}は当空港で保管している。その場でお渡しできた` : `${t.no}は${where}で保管している。取り寄せが必要だった`; }
+    else { ok = true; why = ans === 'here' ? `${t.no}をお渡しした` : `${where}で保管している${t.no}の取り寄せを手配した`; }
+    const pts = ok ? 50 : -80, name = `${g.family} ${g.given}`, label = { here: 'お渡し', send: '取り寄せ', none: '届いていない' }[kind];
+    Game.addScore('mid', pts); Game.decision(ok);
+    if (ok) { s.ok++; Sfx.good(); Toast.show(`<b>正解</b> ${U.esc(why)} <span class="pts">${U.signed(pts)}</span>`, 'ok', 2600); }
+    else { s.ng++; Game.addSat(-4); Sfx.buzz(); Toast.show(`<b>ミス</b> ${U.esc(why)} <span class="pts">${U.signed(pts)}</span>`, 'bad', 5200); }
+    Game.log({ area: 'mid', ok, name, flight: `${g.r.color}の${this.KINDS[g.r.kind]}`, text: why, pts });
+    document.getElementById('jlog').insertAdjacentHTML('afterbegin', `<li class="${ok ? 'ok' : 'bad'}"><span>${ok ? 'OK' : 'ミス'}</span>${U.esc(name)} · ${label}</li>`);
+    s.busy = true;
+    const staff = kind === 'send' ? Talk.fill(DATA.staff.lost.send, { place: x && x.store !== 'here' ? `${DATA.airports[x.store].name.replace(/\(.*\)/, '')}空港` : 'ほかの空港' }) : DATA.staff.lost[kind];
+    this.render(ok ? 'good' : 'bad', staff);
+    setTimeout(() => { if (Game.scene !== this) return; s.idx++; this.next(); }, ok ? 700 : 1300);
+  },
+
+  update(dt) { Hud.tick(dt, 0); },
+
+  finish() {
+    const s = this.s, gf = Game.day.gateFlight;
+    Modal.show({
+      title: '忘れ物センター 終了',
+      body: `<div class="sumgrid three"><div><small>正解</small><b>${s.ok}</b></div><div><small>ミス</small><b>${s.ng}</b></div><div><small>ここでの点数</small><b>${U.fmt(Game.day.score.mid)}</b></div></div>
         <p>次は <b>${gf.gate}番搭乗口</b> で <b>${gf.no}</b> の搭乗案内です。</p>`,
       actions: [{ label: `${gf.gate}番搭乗口へ向かう`, cls: 'primary', run: () => Game.go('gate') }],
     });

@@ -81,6 +81,22 @@ const ISSUES = {
     day: 3, can: () => true,
     apply(p) { if (!p.bag) p.bag = Gen.bag(p.allowance); p.bag.weight = U.r1(U.float(32.4, 38)); },
   },
+  // 機内に持ち込めない手荷物(大きすぎる・3辺の合計オーバー・重すぎる・2個ある)
+  carry_big: {
+    day: 3, can: (p) => !!p.carry && !p.rebook,
+    apply(p) {
+      const c = p.carry, b = c.items[0], mode = U.pick(['size', 'size', 'sum', 'heavy', 'many']);
+      if (mode === 'size') {
+        const dim = U.pick(['h', 'h', 'w', 'd']);
+        if (dim === 'h') b.h = U.int(56, 61); else if (dim === 'w') b.w = U.int(41, 45); else b.d = U.int(26, 30);
+        if (b.kind === 'tote' && dim === 'h') b.kind = 'roller';
+      } else if (mode === 'sum') {
+        // 1辺ずつは制限内なのに、3辺の合計だけが115cmを超える
+        b.kind = 'roller'; b.h = U.int(54, 55); b.w = U.int(38, 40); b.d = U.int(116 - b.h - b.w, 25);
+      } else if (mode === 'heavy') c.kg = U.r1(U.float(10.6, 14.5));
+      else c.items.push(Gen.carryItem('backpack', true));
+    },
+  },
   no_passport: {
     day: 4, can: (p) => p.flight.intl,
     apply(p) { p.passport = null; p.forgot = true; },
@@ -134,6 +150,16 @@ const Rules = {
   bestAlt(alts, need) {
     const ok = alts.filter((a) => this.altFits(a, need)).sort((x, y) => (x.tomorrow - y.tomorrow) || (x.dep - y.dep));
     return ok[0] || null;
+  },
+  // 機内持ち込み手荷物の問題(なければ null)。高さ55・幅40・奥行25cm、3辺の合計115cm、合計10kg、手荷物1個まで
+  carryProblem(p) {
+    const c = p.carry; if (!c) return null;
+    if (c.items.length > 1) return `手荷物が${c.items.length}個あった(持ち込めるのは手荷物1個と身の回り品1個まで)`;
+    const b = c.items[0], sum = b.h + b.w + b.d;
+    if (b.h > 55 || b.w > 40 || b.d > 25) return `手荷物が${b.h}×${b.w}×${b.d}cmで、55×40×25cmを超えていた`;
+    if (sum > 115) return `手荷物の3辺の合計が${sum}cmで、115cmを超えていた`;
+    if (c.kg > 10) return `持ち込む荷物が合わせて${c.kg.toFixed(1)}kgで、10kgを超えていた`;
+    return null;
   },
   bagNeed(weight, allowance) {
     if (weight > DATA.rules.maxPiece) return 'repack';
