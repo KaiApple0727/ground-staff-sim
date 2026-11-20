@@ -992,7 +992,14 @@ const CONFIG = {
    Firebase コンソールの「プロジェクトの設定」→「マイアプリ」にある firebaseConfig をここに入れる。
    null のままなら、ログイン関係のボタンは出ず、今までどおりこの端末だけに保存して遊べる。
    (この値はページに公開されるもので、パスワードではない。守りは Firestore のルールで行う) */
-const FIREBASE_CONFIG = null;
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyDxj9AW0NtA_zXS42SGKomJyElSJqlZUgA',
+  authDomain: 'ground-staff-sim.firebaseapp.com',
+  projectId: 'ground-staff-sim',
+  storageBucket: 'ground-staff-sim.firebasestorage.app',
+  messagingSenderId: '696311434831',
+  appId: '1:696311434831:web:6c953a776baa7e85cc243a',
+};
 
 /* ===== 01-util.js ===== */
 /* ---------- 汎用ヘルパー ---------- */
@@ -2667,6 +2674,7 @@ const Game = {
     else if (a === 'manual-close') Manual.hide();
     else if (a === 'pause') this.setPause(!this.paused);
     else if (a === 'login') Cloud.login();
+    else if (a === 'cloud-retry') Cloud.init();
     else if (a === 'ranking') Cloud.showRanking();
     else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
     else if (a === 'rename') Cloud.askName(false);
@@ -2905,7 +2913,7 @@ const Cloud = {
   boxHTML() {
     if (!this.enabled()) return '';
     const st = { loading: 'ログインを確認中…', saving: '保存中…', saved: 'クラウドに保存済み', in: 'クラウドに保存済み', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || '';
-    if (this.status === 'error' && !this.fb) return '<div class="acct" id="acct"><p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p></div>';
+    if (this.status === 'error' && !this.fb) return '<div class="acct" id="acct"><p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p><div class="acct-btns"><button class="btn small" data-act="g:cloud-retry">もう一度つなぐ</button></div></div>';
     if (this.user) {
       return `<div class="acct in" id="acct"><div class="acct-who"><span class="acct-ic" aria-hidden="true">☁</span><div><b>${U.esc(this.user.name || '…')}</b>さん<small class="${this.status === 'error' ? 'bad' : ''}">${st}</small></div></div>
         <div class="acct-btns"><button class="btn small" data-act="g:ranking">ランキング</button><button class="btn small ghost" data-act="g:rename">名前を変える</button><button class="btn small ghost" data-act="g:logout">ログアウト</button></div></div>`;
