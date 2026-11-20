@@ -951,3 +951,36 @@ body.phone .scale-area:has(.carry-card) .belt { width: 110px; }
 body.phone .t-panel.has-top { padding-top: 54px; }
 body.phone .t-panel > *, body.phone .t-panel.has-top > .t-top + * { margin-top: 0; margin-bottom: 0; }
 body.phone .t-top { top: 10px; right: 12px; }
+/* 右上の名前(押すとプロフィール) */
+button.t-top-me { cursor: pointer; font: inherit; font-weight: 700; font-size: 13px; color: var(--ink); }
+button.t-top-me:hover { border-color: var(--ink); }
+.t-top-nm { overflow: hidden; text-overflow: ellipsis; }
+.t-top-st { color: var(--mute); font-size: 11px; }
+.t-top-st.bad { color: var(--bad); }
+/* プロフィール */
+.acct-ic.big { width: 44px; height: 44px; font-size: 20px; flex: none; }
+.pf-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.pf-who b { font-size: 19px; }
+.pf-who small { display: block; font-size: 11.5px; }
+.pf-who small.ok { color: var(--ok); } .pf-who small.bad { color: var(--bad); }
+.pf-rank { margin-left: auto; text-align: right; }
+.pf-rank small { display: block; font-size: 11px; color: var(--mute); }
+.pf-rank b { font-size: 16px; }
+.pf-rank span { display: block; font-size: 11.5px; color: var(--mute); }
+.pf-h { margin: 14px 0 6px; font-size: 14px; }
+.pf-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.pf-tile { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 0; }
+.pf-tile small { display: block; font-size: 11px; color: var(--mute); }
+.pf-tile b { font-family: var(--f-mono); font-size: 20px; font-variant-numeric: tabular-nums; }
+.pf-tile b small { display: inline; font-family: var(--f-body); font-size: 11px; margin-left: 2px; color: var(--ink); }
+.pf-tile span { display: block; font-size: 10.5px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-jobs { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.pf-jobs th { font-size: 11px; color: var(--mute); text-align: left; font-weight: 700; background: #f0f2f4; }
+.pf-jobs th, .pf-jobs td { padding: 5px 10px; border-bottom: 1px solid #e4e7ea; }
+.pf-bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 8px 0; overflow-x: auto; }
+.pf-bar { flex: 1 0 14px; max-width: 34px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.pf-bar i { display: block; width: 100%; background: var(--brand); border-radius: 3px 3px 0 0; }
+.pf-bar span { font-size: 9.5px; color: var(--mute); line-height: 16px; }
+body.phone .pf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.phone .pf-rank { margin-left: 0; text-align: left; width: 100%; }
+body.phone .modal { padding: 16px; }

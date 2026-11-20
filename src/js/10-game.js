@@ -61,6 +61,7 @@ const Game = {
     else if (a === 'ranking') Cloud.showRanking();
     else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
     else if (a === 'rename') Cloud.askName(false);
+    else if (a === 'profile') Cloud.showProfile();
     else if (a === 'logout') {
       Modal.show({
         title: 'ログアウトしますか?',
@@ -86,6 +87,7 @@ const Game = {
     this.day = Gen.day(n);
     Object.assign(this.day, { clock: this.day.start, sat: 100, score: { counter: 0, mid: 0, gate: 0, combo: 0 }, dec: 0, good: 0, combo: 0, maxCombo: 0, log: [], checked: {}, stats: {} });
     this.day.mid = Progress.midFor(n);
+    this.day.startedAt = Date.now();
     this.day.goals = Goals.forDay(this.day);
     Hud.prev = {}; Hud.lastMin = -1;
     this.go('briefing');

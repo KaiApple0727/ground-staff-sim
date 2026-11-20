@@ -1,7 +1,9 @@
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, stats: this.defStats(), owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
+  // これまでの統計(勤務を終えるたびに足していく)
+  defStats() { return { shifts: 0, minutes: 0, counterPax: 0, boarded: 0, onTime: 0, dec: 0, good: 0, mistakes: 0, maxCombo: 0, stars3: 0, jobs: {} }; },
   load(snap) {
     let d = null;
     try { const raw = localStorage.getItem(CONFIG.saveKey); if (raw) d = JSON.parse(raw); } catch (e) { d = null; }
@@ -11,13 +13,32 @@ const Store = {
     this.data.settings = Object.assign(this.def().settings, (d && d.settings) || {});
     this.data.best = this.data.best || {};
     this.data.medals = this.data.medals || {}; this.data.jobSeen = this.data.jobSeen || {};
+    this.data.stats = Object.assign(this.defStats(), this.data.stats || {});
   },
   save() {
-    try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ }
+    this.saveLocal();
     if (typeof Cloud !== 'undefined' && Cloud.user) Cloud.push();   // ログイン中はクラウドにも
   },
+  saveLocal() { try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ } },
+  // 1日の勤務を統計に足す
+  addShift(d) {
+    const st = this.data.stats, log = d.log || [];
+    st.shifts++;
+    st.minutes += d.startedAt ? Math.min(90, Math.max(0, (Date.now() - d.startedAt) / 60000)) : 0;
+    st.counterPax += log.filter((l) => l.area === 'counter').length;
+    st.boarded += (d.gateStats && d.gateStats.boarded) || 0;
+    if (d.onTime) st.onTime++;
+    st.dec += d.dec || 0; st.good += d.good || 0;
+    st.mistakes += log.filter((l) => l.ok === false).length;
+    st.maxCombo = Math.max(st.maxCombo, d.maxCombo || 0);
+    if (d.stars === 3) st.stars3++;
+    if (d.mid) {
+      const mid = log.filter((l) => l.area === 'mid'), j = st.jobs[d.mid] = st.jobs[d.mid] || { n: 0, ok: 0, days: 0 };
+      j.n += mid.length; j.ok += mid.filter((l) => l.ok === true).length; j.days++;
+    }
+  },
   // クラウドに送る分(音などの設定は端末ごと)
-  cloudData() { const d = this.data; return { v: d.v, day: d.day, total: d.total, best: d.best, medals: d.medals, bestDay: d.bestDay, jobSeen: d.jobSeen }; },
+  cloudData() { const d = this.data; return { v: d.v, day: d.day, total: d.total, best: d.best, medals: d.medals, bestDay: d.bestDay, jobSeen: d.jobSeen, stats: d.stats }; },
   // 別の端末の記録と合わせる(日ごとの最高点・メダル・進んだ日数は、よいほうを残す)
   merge(o) {
     if (!o) return false;
@@ -35,6 +56,17 @@ const Store = {
     }
     if (o.bestDay && (!d.bestDay || o.bestDay.score > d.bestDay.score)) { d.bestDay = { score: o.bestDay.score, n: o.bestDay.n }; changed = true; }
     for (const k of Object.keys(o.jobSeen || {})) if (!d.jobSeen[k]) { d.jobSeen[k] = true; changed = true; }
+    // 1日の最高点は、日ごとの最高点からも確かめる
+    for (const [n, b] of Object.entries(d.best)) if (!d.bestDay || (b.score || 0) > d.bestDay.score) { d.bestDay = { score: b.score || 0, n: +n }; changed = true; }
+    // 統計は、大きいほうを残す(同じ記録を何度合わせても増えすぎないように)
+    if (o.stats) {
+      const a = d.stats, b = o.stats;
+      for (const [k, v] of Object.entries(b)) if (typeof v === 'number' && v > (a[k] || 0)) { a[k] = v; changed = true; }
+      for (const [job, v] of Object.entries(b.jobs || {})) {
+        const x = a.jobs[job] = a.jobs[job] || { n: 0, ok: 0, days: 0 };
+        for (const k of ['n', 'ok', 'days']) if ((v[k] || 0) > x[k]) { x[k] = v[k]; changed = true; }
+      }
+    }
     this.recalcTotal();
     return changed;
   },
@@ -112,7 +144,7 @@ const Modal = {
       <div class="modal-actions">${actions.map((a, i) => `<button class="btn ${a.cls || ''}" data-mact="${i}">${a.label}</button>`).join('')}</div></div></div>`;
     this.open = true;
     const btns = root.querySelectorAll('[data-mact]');
-    if (btns.length) btns[btns.length - 1].focus();
+    if (btns.length) btns[btns.length - 1].focus({ preventScroll: true });   // 長い中身でも上から見えるように
   },
   close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; },
   // ボタンを押したとき、モーダルの中の入力欄(name 付き)の値をまとめて渡す

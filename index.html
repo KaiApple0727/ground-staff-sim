@@ -961,6 +961,39 @@ body.phone .scale-area:has(.carry-card) .belt { width: 110px; }
 body.phone .t-panel.has-top { padding-top: 54px; }
 body.phone .t-panel > *, body.phone .t-panel.has-top > .t-top + * { margin-top: 0; margin-bottom: 0; }
 body.phone .t-top { top: 10px; right: 12px; }
+/* 右上の名前(押すとプロフィール) */
+button.t-top-me { cursor: pointer; font: inherit; font-weight: 700; font-size: 13px; color: var(--ink); }
+button.t-top-me:hover { border-color: var(--ink); }
+.t-top-nm { overflow: hidden; text-overflow: ellipsis; }
+.t-top-st { color: var(--mute); font-size: 11px; }
+.t-top-st.bad { color: var(--bad); }
+/* プロフィール */
+.acct-ic.big { width: 44px; height: 44px; font-size: 20px; flex: none; }
+.pf-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.pf-who b { font-size: 19px; }
+.pf-who small { display: block; font-size: 11.5px; }
+.pf-who small.ok { color: var(--ok); } .pf-who small.bad { color: var(--bad); }
+.pf-rank { margin-left: auto; text-align: right; }
+.pf-rank small { display: block; font-size: 11px; color: var(--mute); }
+.pf-rank b { font-size: 16px; }
+.pf-rank span { display: block; font-size: 11.5px; color: var(--mute); }
+.pf-h { margin: 14px 0 6px; font-size: 14px; }
+.pf-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.pf-tile { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 0; }
+.pf-tile small { display: block; font-size: 11px; color: var(--mute); }
+.pf-tile b { font-family: var(--f-mono); font-size: 20px; font-variant-numeric: tabular-nums; }
+.pf-tile b small { display: inline; font-family: var(--f-body); font-size: 11px; margin-left: 2px; color: var(--ink); }
+.pf-tile span { display: block; font-size: 10.5px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-jobs { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.pf-jobs th { font-size: 11px; color: var(--mute); text-align: left; font-weight: 700; background: #f0f2f4; }
+.pf-jobs th, .pf-jobs td { padding: 5px 10px; border-bottom: 1px solid #e4e7ea; }
+.pf-bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 8px 0; overflow-x: auto; }
+.pf-bar { flex: 1 0 14px; max-width: 34px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.pf-bar i { display: block; width: 100%; background: var(--brand); border-radius: 3px 3px 0 0; }
+.pf-bar span { font-size: 9.5px; color: var(--mute); line-height: 16px; }
+body.phone .pf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.phone .pf-rank { margin-left: 0; text-align: left; width: 100%; }
+body.phone .modal { padding: 16px; }
 
 </style>
 </head>
@@ -2273,7 +2306,9 @@ Object.assign(Art, {
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, stats: this.defStats(), owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
+  // これまでの統計(勤務を終えるたびに足していく)
+  defStats() { return { shifts: 0, minutes: 0, counterPax: 0, boarded: 0, onTime: 0, dec: 0, good: 0, mistakes: 0, maxCombo: 0, stars3: 0, jobs: {} }; },
   load(snap) {
     let d = null;
     try { const raw = localStorage.getItem(CONFIG.saveKey); if (raw) d = JSON.parse(raw); } catch (e) { d = null; }
@@ -2283,13 +2318,32 @@ const Store = {
     this.data.settings = Object.assign(this.def().settings, (d && d.settings) || {});
     this.data.best = this.data.best || {};
     this.data.medals = this.data.medals || {}; this.data.jobSeen = this.data.jobSeen || {};
+    this.data.stats = Object.assign(this.defStats(), this.data.stats || {});
   },
   save() {
-    try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ }
+    this.saveLocal();
     if (typeof Cloud !== 'undefined' && Cloud.user) Cloud.push();   // ログイン中はクラウドにも
   },
+  saveLocal() { try { localStorage.setItem(CONFIG.saveKey, JSON.stringify(this.data)); } catch (e) { /* 保存できない環境でも遊べる */ } },
+  // 1日の勤務を統計に足す
+  addShift(d) {
+    const st = this.data.stats, log = d.log || [];
+    st.shifts++;
+    st.minutes += d.startedAt ? Math.min(90, Math.max(0, (Date.now() - d.startedAt) / 60000)) : 0;
+    st.counterPax += log.filter((l) => l.area === 'counter').length;
+    st.boarded += (d.gateStats && d.gateStats.boarded) || 0;
+    if (d.onTime) st.onTime++;
+    st.dec += d.dec || 0; st.good += d.good || 0;
+    st.mistakes += log.filter((l) => l.ok === false).length;
+    st.maxCombo = Math.max(st.maxCombo, d.maxCombo || 0);
+    if (d.stars === 3) st.stars3++;
+    if (d.mid) {
+      const mid = log.filter((l) => l.area === 'mid'), j = st.jobs[d.mid] = st.jobs[d.mid] || { n: 0, ok: 0, days: 0 };
+      j.n += mid.length; j.ok += mid.filter((l) => l.ok === true).length; j.days++;
+    }
+  },
   // クラウドに送る分(音などの設定は端末ごと)
-  cloudData() { const d = this.data; return { v: d.v, day: d.day, total: d.total, best: d.best, medals: d.medals, bestDay: d.bestDay, jobSeen: d.jobSeen }; },
+  cloudData() { const d = this.data; return { v: d.v, day: d.day, total: d.total, best: d.best, medals: d.medals, bestDay: d.bestDay, jobSeen: d.jobSeen, stats: d.stats }; },
   // 別の端末の記録と合わせる(日ごとの最高点・メダル・進んだ日数は、よいほうを残す)
   merge(o) {
     if (!o) return false;
@@ -2307,6 +2361,17 @@ const Store = {
     }
     if (o.bestDay && (!d.bestDay || o.bestDay.score > d.bestDay.score)) { d.bestDay = { score: o.bestDay.score, n: o.bestDay.n }; changed = true; }
     for (const k of Object.keys(o.jobSeen || {})) if (!d.jobSeen[k]) { d.jobSeen[k] = true; changed = true; }
+    // 1日の最高点は、日ごとの最高点からも確かめる
+    for (const [n, b] of Object.entries(d.best)) if (!d.bestDay || (b.score || 0) > d.bestDay.score) { d.bestDay = { score: b.score || 0, n: +n }; changed = true; }
+    // 統計は、大きいほうを残す(同じ記録を何度合わせても増えすぎないように)
+    if (o.stats) {
+      const a = d.stats, b = o.stats;
+      for (const [k, v] of Object.entries(b)) if (typeof v === 'number' && v > (a[k] || 0)) { a[k] = v; changed = true; }
+      for (const [job, v] of Object.entries(b.jobs || {})) {
+        const x = a.jobs[job] = a.jobs[job] || { n: 0, ok: 0, days: 0 };
+        for (const k of ['n', 'ok', 'days']) if ((v[k] || 0) > x[k]) { x[k] = v[k]; changed = true; }
+      }
+    }
     this.recalcTotal();
     return changed;
   },
@@ -2384,7 +2449,7 @@ const Modal = {
       <div class="modal-actions">${actions.map((a, i) => `<button class="btn ${a.cls || ''}" data-mact="${i}">${a.label}</button>`).join('')}</div></div></div>`;
     this.open = true;
     const btns = root.querySelectorAll('[data-mact]');
-    if (btns.length) btns[btns.length - 1].focus();
+    if (btns.length) btns[btns.length - 1].focus({ preventScroll: true });   // 長い中身でも上から見えるように
   },
   close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; },
   // ボタンを押したとき、モーダルの中の入力欄(name 付き)の値をまとめて渡す
@@ -2700,6 +2765,7 @@ const Game = {
     else if (a === 'ranking') Cloud.showRanking();
     else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
     else if (a === 'rename') Cloud.askName(false);
+    else if (a === 'profile') Cloud.showProfile();
     else if (a === 'logout') {
       Modal.show({
         title: 'ログアウトしますか？',
@@ -2725,6 +2791,7 @@ const Game = {
     this.day = Gen.day(n);
     Object.assign(this.day, { clock: this.day.start, sat: 100, score: { counter: 0, mid: 0, gate: 0, combo: 0 }, dec: 0, good: 0, combo: 0, maxCombo: 0, log: [], checked: {}, stats: {} });
     this.day.mid = Progress.midFor(n);
+    this.day.startedAt = Date.now();
     this.day.goals = Goals.forDay(this.day);
     Hud.prev = {}; Hud.lastMin = -1;
     this.go('briefing');
@@ -2893,6 +2960,9 @@ const Cloud = {
     if (!this.user || !this.user.name || !this.fb) return;
     const { db, F } = this.fb, d = Store.data, uid = this.user.uid, name = this.user.name;
     try {
+      const snap = await F.getDoc(F.doc(db, 'saves', uid));
+      if (snap.exists() && snap.data().data && Store.merge(snap.data().data)) Store.saveLocal();
+      if (!this.user || this.user.uid !== uid) return;
       await F.setDoc(F.doc(db, 'saves', uid), { data: JSON.parse(JSON.stringify(Store.cloudData())), name, updatedAt: F.serverTimestamp() });
       await F.setDoc(F.doc(db, 'ranking', uid), {
         name, total: Math.max(0, Math.round(d.total || 0)), best: Math.max(0, Math.round((d.bestDay && d.bestDay.score) || 0)), day: Math.round(d.day || 1), updatedAt: F.serverTimestamp(),
@@ -2903,6 +2973,47 @@ const Cloud = {
       clearTimeout(this._retry); this._retry = setTimeout(() => this.push(), 20000);   // しばらくしてからやり直す
     }
     this.refresh();
+  },
+
+  /* ===== プロフィール(右上の名前から)と、これまでの統計 ===== */
+  showProfile() {
+    if (!this.user) return;
+    const s = Store.data, st = s.stats, r = Game.rank(s.total), nx = Game.nextRank(s.total);
+    const bests = Object.entries(s.best).map(([n, b]) => ({ n: +n, ...b })).sort((a, b) => a.n - b.n);
+    const stars = bests.reduce((x, b) => x + (b.stars || 0), 0), medals = Goals.medalCount();
+    const hm = (m) => (m >= 60 ? `${Math.floor(m / 60)}時間${Math.round(m % 60)}分` : `${Math.round(m)}分`);
+    const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+    const tile = (label, val, sub) => `<div class="pf-tile"><small>${label}</small><b>${val}</b>${sub ? `<span>${sub}</span>` : ''}</div>`;
+    const max = Math.max(1, ...bests.map((b) => b.score));
+    const jobs = Object.keys(DATA.jobs).filter((j) => st.jobs[j] && st.jobs[j].days);
+    const status = { saving: '保存中…', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || 'クラウドに保存済み';
+    Modal.show({
+      title: 'プロフィール',
+      wide: true,
+      body: `<div class="pf-head"><span class="acct-ic big" aria-hidden="true">☁</span>
+          <div class="pf-who"><b>${U.esc(this.user.name)}</b>さん<small class="${this.status === 'error' ? 'bad' : 'ok'}">${status}</small></div>
+          <div class="pf-rank"><small>ランク</small><b>${r.name}</b><span>${nx ? `次の「${nx.name}」まで あと${U.fmt(nx.min - s.total)}点` : '最高ランクです'}</span></div></div>
+        <h3 class="pf-h">これまでの統計</h3>
+        ${st.shifts ? '' : '<p class="small mute">勤務を終えるごとに、ここに記録がたまっていきます(この機能を入れる前の勤務は、点数と★・メダルだけ反映されています)。</p>'}
+        <div class="pf-grid">
+          ${tile('進んだ日', `${s.day - 1}<small>日目までクリア</small>`)}
+          ${tile('累計の点数', `${U.fmt(s.total)}<small>点</small>`)}
+          ${tile('1日の最高点', s.bestDay ? `${U.fmt(s.bestDay.score)}<small>点</small>` : '—', s.bestDay ? `${s.bestDay.n}日目` : '')}
+          ${tile('メダル', `${medals}<small>個</small>`, bests.length ? `${bests.length * 3}個中` : '')}
+          ${tile('★の数', `${stars}<small>個</small>`, `★3つの勤務 ${st.stars3}回`)}
+          ${tile('勤務した回数', `${st.shifts}<small>回</small>`, st.minutes ? `合計 ${hm(st.minutes)}` : '')}
+          ${tile('判断の正確さ', pct(st.good, st.dec), st.dec ? `${U.fmt(st.dec)}回中 ${U.fmt(st.good)}回正解` : '')}
+          ${tile('最大コンボ', `${st.maxCombo}`)}
+          ${tile('カウンターの対応', `${U.fmt(st.counterPax)}<small>人</small>`)}
+          ${tile('搭乗ゲートの案内', `${U.fmt(st.boarded)}<small>人</small>`)}
+          ${tile('定刻出発', `${st.onTime}<small>回</small>`, st.shifts ? `定刻率 ${pct(st.onTime, st.shifts)}` : '')}
+          ${tile('ミス', `${U.fmt(st.mistakes)}<small>回</small>`)}
+        </div>
+        ${jobs.length ? `<h3 class="pf-h">仕事ごと</h3><table class="pf-jobs"><tr><th>仕事</th><th>担当した日</th><th>対応</th><th>正解率</th></tr>
+          ${jobs.map((j) => { const x = st.jobs[j]; return `<tr><td>${DATA.jobs[j].name}</td><td>${x.days}日</td><td>${x.n}件</td><td>${pct(x.ok, x.n)}</td></tr>`; }).join('')}</table>` : ''}
+        ${bests.length ? `<h3 class="pf-h">日ごとの最高点</h3><div class="pf-bars" role="img" aria-label="日ごとの最高点のグラフ">${bests.map((b) => `<div class="pf-bar" title="${b.n}日目 ${U.fmt(b.score)}点"><i style="height:${Math.max(3, (Math.max(0, b.score) / max) * 100)}%"></i><span>${b.n}</span></div>`).join('')}</div>` : ''}`,
+      actions: [{ label: '名前を変える', cls: 'ghost', run: () => this.askName(false) }, { label: 'ログアウト', cls: 'ghost', run: () => Game.globalAct('logout') }, { label: '閉じる', cls: 'primary' }],
+    });
   },
 
   /* ===== ランキング ===== */
@@ -2943,7 +3054,7 @@ const Cloud = {
   topHTML() {
     if (!this.enabled()) return '';
     return `<div class="t-top" id="ttop"><button class="btn small t-top-btn" data-act="g:ranking"><span aria-hidden="true">🏆</span>ランキング</button>
-      ${this.user ? `<span class="t-top-me" title="ログイン中"><span class="acct-ic sm" aria-hidden="true">☁</span>${U.esc(this.user.name || '…')}</span>`
+      ${this.user ? `<button class="t-top-me" data-act="g:profile" aria-label="プロフィールと統計を見る"><span class="acct-ic sm" aria-hidden="true">☁</span><span class="t-top-nm">${U.esc(this.user.name || '…')}</span><span class="t-top-st ${this.status === 'error' ? 'bad' : ''}" aria-hidden="true">${this.status === 'saving' ? '…' : this.status === 'error' ? '!' : ''}</span></button>`
         : `<button class="btn small t-top-btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>ログイン</button>`}</div>`;
   },
 
@@ -2951,7 +3062,7 @@ const Cloud = {
   boxHTML() {
     if (!this.enabled()) return '';
     const st = { loading: 'ログインを確認中…', saving: '保存中…', saved: 'クラウドに保存済み', in: 'クラウドに保存済み', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || '';
-    const hide = !this.user && Store.data.settings.hideAcct;
+    const hide = !!this.user || Store.data.settings.hideAcct;
     if (hide) return '<div id="acct" hidden></div>';
     const x = '<button class="acct-x" data-act="g:acct-hide" aria-label="この案内を閉じる" title="閉じる(右上のボタンからいつでもログインできます)">×</button>';
     if (this.status === 'error' && !this.fb) return `<div class="acct" id="acct">${x}<p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p><div class="acct-btns"><button class="btn small" data-act="g:cloud-retry">もう一度つなぐ</button></div></div>`;
@@ -4785,6 +4896,7 @@ Scenes.result = {
       sd.medals[d.n] = [...had];
       d.recordBest = !sd.bestDay || score > sd.bestDay.score;
       if (d.recordBest) sd.bestDay = { score, n: d.n };
+      d.stars = stars; Store.addShift(d);
       Store.recalcTotal(); Store.save();
       const after = Game.rank(sd.total);
       d.rankUp = after.name !== rankBefore.name ? after : null;

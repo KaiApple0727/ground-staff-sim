@@ -18,6 +18,7 @@ Scenes.result = {
       sd.medals[d.n] = [...had];
       d.recordBest = !sd.bestDay || score > sd.bestDay.score;
       if (d.recordBest) sd.bestDay = { score, n: d.n };
+      d.stars = stars; Store.addShift(d);
       Store.recalcTotal(); Store.save();
       const after = Game.rank(sd.total);
       d.rankUp = after.name !== rankBefore.name ? after : null;

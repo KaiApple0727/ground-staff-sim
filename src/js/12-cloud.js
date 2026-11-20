@@ -143,6 +143,9 @@ const Cloud = {
     if (!this.user || !this.user.name || !this.fb) return;
     const { db, F } = this.fb, d = Store.data, uid = this.user.uid, name = this.user.name;
     try {
+      const snap = await F.getDoc(F.doc(db, 'saves', uid));
+      if (snap.exists() && snap.data().data && Store.merge(snap.data().data)) Store.saveLocal();
+      if (!this.user || this.user.uid !== uid) return;
       await F.setDoc(F.doc(db, 'saves', uid), { data: JSON.parse(JSON.stringify(Store.cloudData())), name, updatedAt: F.serverTimestamp() });
       await F.setDoc(F.doc(db, 'ranking', uid), {
         name, total: Math.max(0, Math.round(d.total || 0)), best: Math.max(0, Math.round((d.bestDay && d.bestDay.score) || 0)), day: Math.round(d.day || 1), updatedAt: F.serverTimestamp(),
@@ -153,6 +156,47 @@ const Cloud = {
       clearTimeout(this._retry); this._retry = setTimeout(() => this.push(), 20000);   // しばらくしてからやり直す
     }
     this.refresh();
+  },
+
+  /* ===== プロフィール(右上の名前から)と、これまでの統計 ===== */
+  showProfile() {
+    if (!this.user) return;
+    const s = Store.data, st = s.stats, r = Game.rank(s.total), nx = Game.nextRank(s.total);
+    const bests = Object.entries(s.best).map(([n, b]) => ({ n: +n, ...b })).sort((a, b) => a.n - b.n);
+    const stars = bests.reduce((x, b) => x + (b.stars || 0), 0), medals = Goals.medalCount();
+    const hm = (m) => (m >= 60 ? `${Math.floor(m / 60)}時間${Math.round(m % 60)}分` : `${Math.round(m)}分`);
+    const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+    const tile = (label, val, sub) => `<div class="pf-tile"><small>${label}</small><b>${val}</b>${sub ? `<span>${sub}</span>` : ''}</div>`;
+    const max = Math.max(1, ...bests.map((b) => b.score));
+    const jobs = Object.keys(DATA.jobs).filter((j) => st.jobs[j] && st.jobs[j].days);
+    const status = { saving: '保存中…', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || 'クラウドに保存済み';
+    Modal.show({
+      title: 'プロフィール',
+      wide: true,
+      body: `<div class="pf-head"><span class="acct-ic big" aria-hidden="true">☁</span>
+          <div class="pf-who"><b>${U.esc(this.user.name)}</b>さん<small class="${this.status === 'error' ? 'bad' : 'ok'}">${status}</small></div>
+          <div class="pf-rank"><small>ランク</small><b>${r.name}</b><span>${nx ? `次の「${nx.name}」まで あと${U.fmt(nx.min - s.total)}点` : '最高ランクです'}</span></div></div>
+        <h3 class="pf-h">これまでの統計</h3>
+        ${st.shifts ? '' : '<p class="small mute">勤務を終えるごとに、ここに記録がたまっていきます(この機能を入れる前の勤務は、点数と★・メダルだけ反映されています)。</p>'}
+        <div class="pf-grid">
+          ${tile('進んだ日', `${s.day - 1}<small>日目までクリア</small>`)}
+          ${tile('累計の点数', `${U.fmt(s.total)}<small>点</small>`)}
+          ${tile('1日の最高点', s.bestDay ? `${U.fmt(s.bestDay.score)}<small>点</small>` : '—', s.bestDay ? `${s.bestDay.n}日目` : '')}
+          ${tile('メダル', `${medals}<small>個</small>`, bests.length ? `${bests.length * 3}個中` : '')}
+          ${tile('★の数', `${stars}<small>個</small>`, `★3つの勤務 ${st.stars3}回`)}
+          ${tile('勤務した回数', `${st.shifts}<small>回</small>`, st.minutes ? `合計 ${hm(st.minutes)}` : '')}
+          ${tile('判断の正確さ', pct(st.good, st.dec), st.dec ? `${U.fmt(st.dec)}回中 ${U.fmt(st.good)}回正解` : '')}
+          ${tile('最大コンボ', `${st.maxCombo}`)}
+          ${tile('カウンターの対応', `${U.fmt(st.counterPax)}<small>人</small>`)}
+          ${tile('搭乗ゲートの案内', `${U.fmt(st.boarded)}<small>人</small>`)}
+          ${tile('定刻出発', `${st.onTime}<small>回</small>`, st.shifts ? `定刻率 ${pct(st.onTime, st.shifts)}` : '')}
+          ${tile('ミス', `${U.fmt(st.mistakes)}<small>回</small>`)}
+        </div>
+        ${jobs.length ? `<h3 class="pf-h">仕事ごと</h3><table class="pf-jobs"><tr><th>仕事</th><th>担当した日</th><th>対応</th><th>正解率</th></tr>
+          ${jobs.map((j) => { const x = st.jobs[j]; return `<tr><td>${DATA.jobs[j].name}</td><td>${x.days}日</td><td>${x.n}件</td><td>${pct(x.ok, x.n)}</td></tr>`; }).join('')}</table>` : ''}
+        ${bests.length ? `<h3 class="pf-h">日ごとの最高点</h3><div class="pf-bars" role="img" aria-label="日ごとの最高点のグラフ">${bests.map((b) => `<div class="pf-bar" title="${b.n}日目 ${U.fmt(b.score)}点"><i style="height:${Math.max(3, (Math.max(0, b.score) / max) * 100)}%"></i><span>${b.n}</span></div>`).join('')}</div>` : ''}`,
+      actions: [{ label: '名前を変える', cls: 'ghost', run: () => this.askName(false) }, { label: 'ログアウト', cls: 'ghost', run: () => Game.globalAct('logout') }, { label: '閉じる', cls: 'primary' }],
+    });
   },
 
   /* ===== ランキング ===== */
@@ -193,7 +237,7 @@ const Cloud = {
   topHTML() {
     if (!this.enabled()) return '';
     return `<div class="t-top" id="ttop"><button class="btn small t-top-btn" data-act="g:ranking"><span aria-hidden="true">🏆</span>ランキング</button>
-      ${this.user ? `<span class="t-top-me" title="ログイン中"><span class="acct-ic sm" aria-hidden="true">☁</span>${U.esc(this.user.name || '…')}</span>`
+      ${this.user ? `<button class="t-top-me" data-act="g:profile" aria-label="プロフィールと統計を見る"><span class="acct-ic sm" aria-hidden="true">☁</span><span class="t-top-nm">${U.esc(this.user.name || '…')}</span><span class="t-top-st ${this.status === 'error' ? 'bad' : ''}" aria-hidden="true">${this.status === 'saving' ? '…' : this.status === 'error' ? '!' : ''}</span></button>`
         : `<button class="btn small t-top-btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>ログイン</button>`}</div>`;
   },
 
@@ -201,7 +245,7 @@ const Cloud = {
   boxHTML() {
     if (!this.enabled()) return '';
     const st = { loading: 'ログインを確認中…', saving: '保存中…', saved: 'クラウドに保存済み', in: 'クラウドに保存済み', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || '';
-    const hide = !this.user && Store.data.settings.hideAcct;
+    const hide = !!this.user || Store.data.settings.hideAcct;
     if (hide) return '<div id="acct" hidden></div>';
     const x = '<button class="acct-x" data-act="g:acct-hide" aria-label="この案内を閉じる" title="閉じる(右上のボタンからいつでもログインできます)">×</button>';
     if (this.status === 'error' && !this.fb) return `<div class="acct" id="acct">${x}<p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p><div class="acct-btns"><button class="btn small" data-act="g:cloud-retry">もう一度つなぐ</button></div></div>`;
