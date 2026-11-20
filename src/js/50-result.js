@@ -1,6 +1,7 @@
 /* ---------- 1日の結果 ---------- */
 Scenes.result = {
   enter() {
+    if (Game.run) { this.enterRun(); return; }
     const d = Game.day, sd = Store.data, score = Game.dayScore();
     const acc = d.dec ? d.good / d.dec : 1;
     const stars = acc >= 0.95 && d.onTime && d.sat >= 80 ? 3 : acc >= 0.8 ? 2 : 1;
@@ -8,6 +9,7 @@ Scenes.result = {
     const goals = d.goals.map((id) => ({ id, label: Goals.label(id, d), done: Goals.check(id, d) }));
     if (!d.saved) {
       d.saved = true;
+      const wasModes = Modes.unlocked();
       const prev = sd.best[d.n];
       sd.best[d.n] = { score: Math.max(prev ? prev.score : -Infinity, score), stars: Math.max(prev ? prev.stars : 0, stars) };
       sd.day = Math.max(sd.day, d.n + 1);
@@ -23,6 +25,7 @@ Scenes.result = {
       const after = Game.rank(sd.total);
       d.rankUp = after.name !== rankBefore.name ? after : null;
       d.newBest = !prev || score > prev.score;
+      d.modesUnlocked = !wasModes && Modes.unlocked();
     }
     const r = Game.rank(sd.total), nx = Game.nextRank(sd.total);
     const prog = nx ? ((sd.total - r.min) / (nx.min - r.min)) * 100 : 100;
@@ -81,12 +84,61 @@ Scenes.result = {
       Modal.show({
         title: `昇進しました!「${d.rankUp.name}」`,
         body: job ? `<p>新しい仕事<b>「${job.name}」</b>が、次の勤務からカウンターと搭乗ゲートの間に加わります。</p><p class="mute">${job.desc} ルールはマニュアルにも追加されました。</p>` : '<p>これからもこの調子でがんばりましょう。</p>',
-        actions: [{ label: 'やった!', cls: 'primary' }],
+        actions: [{ label: 'やった!', cls: 'primary', run: () => this.showUnlock(d) }],
       });
-    }
+    } else this.showUnlock(d);
+  },
+
+  // 30日目をクリアしたとき:チャレンジモードの解禁
+  showUnlock(d) {
+    if (!d.modesUnlocked || d.modesShown) return;
+    d.modesShown = true;
+    Sfx.chime();
+    Modal.show({
+      title: 'チャレンジモードが解禁されました!',
+      body: `<p>30日目のクリア、おめでとうございます。タイトル画面から、2つのモードが遊べるようになりました。</p>
+        <ul class="unlock-list"><li><b>${Modes.KINDS.endless.name}</b>:終わりのない勤務で、どこまで点数をのばせるか</li><li><b>${Modes.KINDS.sudden.name}</b>:1回ミスしたら終わり。何回続けて正解できるか</li></ul>`,
+      actions: [{ label: 'やった!', cls: 'primary' }],
+    });
+  },
+
+  // チャレンジモードのステージの結果
+  enterRun() {
+    const d = Game.day, r = Game.run, K = Modes.KINDS[r.kind], score = Game.dayScore();
+    Modes.stageDone(d);
+    const acc = d.dec ? d.good / d.dec : 1, mistakes = d.log.filter((l) => l.ok === false).length;
+    const mark = (ok) => (ok === true ? '<span class="pill ok">OK</span>' : ok === 'partial' ? '<span class="pill warn">△</span>' : '<span class="pill bad">ミス</span>');
+    const list = (arr) => (arr.length ? `<ul class="loglist">${arr.map((l) => `<li>${mark(l.ok)}<div><b>${U.esc(l.name)}</b> <small>${l.flight}</small><p>${U.esc(l.text)}</p></div><span class="lp ${l.pts < 0 ? 'neg' : ''}">${U.signed(l.pts)}</span></li>`).join('')}</ul>` : '<p class="mute">記録はありません</p>');
+    const logs = (area) => d.log.filter((l) => l.area === area);
+    const best = Modes.rec(r.kind).best, sudden = r.kind === 'sudden';
+    document.getElementById('app').innerHTML = Hud.frame(`<div class="result run">
+      <div class="r-left">
+        <section class="panel r-head">
+          <div class="r-title"><p class="eyebrow">${K.name}</p><h2>ステージ${r.stage} クリア!</h2>${sudden ? '<span class="pill ok">ノーミス継続中</span>' : ''}</div>
+          <div class="r-score"><small>このステージ</small><b>${U.fmt(score)}</b></div>
+        </section>
+        <section class="metrics">
+          <div class="metric"><small>${sudden ? '連続正解' : '合計スコア'}</small><b>${sudden ? `${U.fmt(r.good)}回` : U.fmt(r.score)}</b><span>${sudden ? `合計 ${U.fmt(r.score)}点` : `判断の正確さ ${Math.round(acc * 100)}%`}</span></div>
+          <div class="metric"><small>クリアしたステージ</small><b>${r.stage}</b><span>次は 時間の速さ ×${Math.round((d.cfg.speed / Modes.speedUp(r.stage)) * Modes.speedUp(r.stage + 1) * 10) / 10}</span></div>
+          <div class="metric"><small>自己ベスト</small><b>${sudden ? `${U.fmt(best)}回` : U.fmt(best)}</b><span>${(sudden ? r.good : r.score) >= best && best > 0 ? '更新中!' : ''}</span></div>
+          <div class="metric"><small>最大コンボ</small><b>${d.maxCombo}</b><span>${sudden ? '' : `ミス ${mistakes}件`}</span></div>
+        </section>
+        <div class="r-actions">
+          <button class="btn primary big" data-act="run-next">ステージ${r.stage + 1}へ</button>
+          <button class="btn ghost" data-act="run-quit">ここでやめる</button>
+        </div>
+      </div>
+      <div class="panel r-logs">
+        <section><h3>チェックインカウンター</h3>${list(logs('counter'))}</section>
+        ${d.mid ? `<section><h3>${DATA.jobs[d.mid].name}</h3>${list(logs('mid'))}</section>` : ''}
+        <section><h3>${d.gateFlight.gate}番搭乗口</h3>${list(logs('gate'))}</section>
+      </div>
+    </div>`);
   },
   update(dt) { Hud.tick(dt, 0); },
   onAct(a) {
+    if (a === 'run-next') { Modes.next(); return; }
+    if (a === 'run-quit') { Modes.quit(); return; }
     const n = Game.day.n;
     if (a === 'next') Game.startDay(n + 1);
     else if (a === 'retry') Game.startDay(n);

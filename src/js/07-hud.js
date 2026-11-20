@@ -18,7 +18,7 @@ const Hud = {
     return `<header class="topbar">
       <div class="brand">${Art.logo()}<div><b>${DATA.airline.name}</b><small>${Cloud.name() ? `担当 ${U.esc(Cloud.name())}` : `${DATA.home.full} 旅客サービス`}</small></div></div>
       <div class="tb-stats">
-        <div class="stat"><small>勤務</small><b>${d.n}日目</b></div>
+        <div class="stat">${Game.run ? `<small>${Modes.KINDS[Game.run.kind].short}</small><b>ステージ${Game.run.stage}</b>` : `<small>勤務</small><b>${d.n}日目</b>`}</div>
         <div class="stat st-rank"><small>ランク</small><b class="rk">${Game.rank().name}</b></div>
         <div class="stat"><small>本日のスコア</small><b id="hud-score">${U.fmt(Game.dayScore())}</b></div>
         <div class="stat combo ${d.combo >= 5 ? 'hot' : ''}" id="hud-combo-wrap"><small>コンボ</small><b id="hud-combo">${d.combo}</b></div>

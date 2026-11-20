@@ -3,6 +3,7 @@ const Scenes = {};   // シーン(画面)の登録先。Scenes.xxx = { enter, up
 
 const Game = {
   day: null, scene: null, paused: false, last: 0,
+  run: null,   // チャレンジモードの途中なら { kind, stage, score, ... }
 
   boot(snap) {
     Store.load(snap);
@@ -73,6 +74,7 @@ const Game = {
     else if (a === 'profile') Cloud.showProfile();
     else if (a === 'icon') Cloud.showIconPicker();
     else if (a === 'changelog') this.showChangelog();
+    else if (a === 'mode') Modes.ask(ds.k);
     else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'icon-crop') Cloud.showCropper();
     else if (a === 'logout') {
@@ -128,13 +130,14 @@ const Game = {
   // 判断の記録。正解が続くとコンボになり、5連続からボーナス点(コンボ数の半分、1回につき最大10点)
   decision(ok) {
     const d = this.day; d.dec++;
+    if (!ok && this.run) Modes.fail(Modes.lastBad());   // ミスするまで続くモードは、ここで終わり
     if (ok) {
       d.good++; d.combo++; d.maxCombo = Math.max(d.maxCombo, d.combo);
       if (d.combo >= 5) d.score.combo += Math.min(10, Math.floor(d.combo / 2));
     } else d.combo = 0;
     Hud.refreshStats();
   },
-  log(entry) { this.day.log.push(entry); },
+  log(entry) { this.day.log.push(entry); if (entry.ok === false && this.run) Modes.fail(entry.text); },
   dayScore() { const s = this.day && this.day.score; return s ? s.counter + s.mid + s.gate + s.combo : 0; },
   rank(total = Store.data.total) { let r = DATA.ranks[0]; for (const x of DATA.ranks) if (total >= x.min) r = x; return r; },
   nextRank(total = Store.data.total) { return DATA.ranks.find((x) => x.min > total) || null; },

@@ -1,7 +1,7 @@
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, stats: this.defStats(), owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, stats: this.defStats(), modes: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
   // これまでの統計(勤務を終えるたびに足していく)
   defStats() { return { shifts: 0, minutes: 0, counterPax: 0, boarded: 0, onTime: 0, dec: 0, good: 0, mistakes: 0, maxCombo: 0, stars3: 0, jobs: {} }; },
   load(snap) {
@@ -14,6 +14,7 @@ const Store = {
     this.data.best = this.data.best || {};
     this.data.medals = this.data.medals || {}; this.data.jobSeen = this.data.jobSeen || {};
     this.data.stats = Object.assign(this.defStats(), this.data.stats || {});
+    this.data.modes = this.data.modes || {};
   },
   save() {
     this.saveLocal();
@@ -38,7 +39,7 @@ const Store = {
     }
   },
   // クラウドに送る分(音などの設定は端末ごと)
-  cloudData() { const d = this.data; return { v: d.v, day: d.day, total: d.total, best: d.best, medals: d.medals, bestDay: d.bestDay, jobSeen: d.jobSeen, stats: d.stats }; },
+  cloudData() { const d = this.data; return { v: d.v, day: d.day, total: d.total, best: d.best, medals: d.medals, bestDay: d.bestDay, jobSeen: d.jobSeen, stats: d.stats, modes: d.modes }; },
   // 別の端末の記録と合わせる(日ごとの最高点・メダル・進んだ日数は、よいほうを残す)
   merge(o) {
     if (!o) return false;
@@ -56,6 +57,11 @@ const Store = {
     }
     if (o.bestDay && (!d.bestDay || o.bestDay.score > d.bestDay.score)) { d.bestDay = { score: o.bestDay.score, n: o.bestDay.n }; changed = true; }
     for (const k of Object.keys(o.jobSeen || {})) if (!d.jobSeen[k]) { d.jobSeen[k] = true; changed = true; }
+    // チャレンジモードの記録は、それぞれ大きいほう
+    for (const [k, v] of Object.entries(o.modes || {})) {
+      const x = d.modes[k] = d.modes[k] || {};
+      for (const f of ['best', 'stage', 'score', 'plays']) if ((v[f] || 0) > (x[f] || 0)) { x[f] = v[f]; changed = true; }
+    }
     // 1日の最高点は、日ごとの最高点からも確かめる
     for (const [n, b] of Object.entries(d.best)) if (!d.bestDay || (b.score || 0) > d.bestDay.score) { d.bestDay = { score: b.score || 0, n: +n }; changed = true; }
     // 統計は、大きいほうを残す(同じ記録を何度合わせても増えすぎないように)

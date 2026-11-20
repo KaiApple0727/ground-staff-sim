@@ -1,6 +1,7 @@
 /* ---------- タイトル ---------- */
 Scenes.title = {
   enter() {
+    if (Game.run) { Modes.record(true); Game.run = null; }
     const s = Store.data, r = Game.rank(s.total), first = s.day === 1 && !Object.keys(s.best).length;
     const demo = [
       ['07:30', 'TB 301', '福岡', '3', '搭乗中', 'board'],
@@ -38,6 +39,7 @@ Scenes.title = {
             if (n === s.day) return `<button class="btn small dayb cur" data-act="start" title="${name}(次の勤務)">${n}${tag}<span class="st now">つぎ</span></button>`;
             return `<button class="btn small dayb locked" data-act="locked" data-n="${n}" aria-disabled="true" title="${name}(まだ遊べません)">${n}${tag}<span class="st">${this.lock()}</span></button>`;
           }).join('')}</div></div>
+        ${Modes.titleHTML()}
         <div class="t-opts">
           <button class="btn ghost small" data-act="speech" aria-pressed="${s.settings.speech}">アナウンス読み上げ: ${s.settings.speech ? 'ON' : 'OFF'}</button>
           <button class="btn ghost small" data-act="g:changelog">アップデート履歴${!first && s.settings.seenVer !== CONFIG.version ? '<span class="new-dot">NEW</span>' : ''}</button>
@@ -89,7 +91,7 @@ Scenes.briefing = {
       <section class="panel b-main">
         <p class="eyebrow">本日の勤務 · ${U.jp(d.date)}${Cloud.name() ? ` · 担当 ${U.esc(Cloud.name())}` : ''}</p>
         ${d.event ? `<div class="ev-banner"><small>特別な日 SPECIAL DAY</small><b>${DATA.events[d.event].name}</b></div>` : ''}
-        <h2>${d.cfg.title}</h2>
+        <h2>${Game.run ? `${Modes.KINDS[Game.run.kind].name} ステージ${Game.run.stage}` : d.cfg.title}</h2>
         <p class="b-lede">${d.cfg.brief}</p>
         <ol class="b-tasks">
           <li><span class="b-time">${U.hm(d.start)}〜</span><div><b>チェックインカウンター</b><small>${d.flights.map((f) => `<i class="chip" style="background:${f.color}"></i>${f.no} ${f.ap.name}${f.canceled ? '(欠航)' : ''}`).join('　')}</small></div></li>
@@ -100,7 +102,8 @@ Scenes.briefing = {
         <div class="b-actions"><button class="btn primary big" data-act="open">カウンターを開ける</button><button class="btn ghost" data-act="back">タイトルへ</button></div>
       </section>
       <section class="panel b-rules">
-        <div class="b-goals"><small>今日の目標(達成するとメダル)</small><ul>${d.goals.map((id) => `<li><span class="medal" aria-hidden="true"></span>${U.esc(Goals.label(id, d))}</li>`).join('')}</ul></div>
+        ${Game.run ? `<div class="b-goals mode"><small>${Modes.KINDS[Game.run.kind].name}</small><p>${Game.run.kind === 'sudden' ? `<b>1回でもミスしたら終わり</b>です。ここまでの連続正解 <b>${U.fmt(Game.run.good)}回</b>` : `ここまでの合計 <b>${U.fmt(Game.run.score)}点</b>`} · 時間の速さ ×${d.cfg.speed}</p></div>`
+          : `<div class="b-goals"><small>今日の目標(達成するとメダル)</small><ul>${d.goals.map((id) => `<li><span class="medal" aria-hidden="true"></span>${U.esc(Goals.label(id, d))}</li>`).join('')}</ul></div>`}
         <h3>${heading}</h3>
         <div class="rules">${rules}</div>
         <button class="btn ghost small" data-act="g:manual">マニュアルをすべて見る</button>

@@ -359,6 +359,8 @@ const Cloud = {
           ${tile('搭乗ゲートの案内', `${U.fmt(st.boarded)}<small>人</small>`)}
           ${tile('定刻出発', `${st.onTime}<small>回</small>`, st.shifts ? `定刻率 ${pct(st.onTime, st.shifts)}` : '')}
           ${tile('ミス', `${U.fmt(st.mistakes)}<small>回</small>`)}
+          ${Modes.unlocked() ? `${tile('エンドレス最高', Modes.rec('endless').best ? `${U.fmt(Modes.rec('endless').best)}<small>点</small>` : '—', Modes.rec('endless').stage ? `ステージ${Modes.rec('endless').stage}まで` : '')}
+            ${tile('ノーミス最高', Modes.rec('sudden').best ? `${U.fmt(Modes.rec('sudden').best)}<small>回連続</small>` : '—', Modes.rec('sudden').stage ? `ステージ${Modes.rec('sudden').stage}まで` : '')}` : ''}
         </div>
         ${jobs.length ? `<h3 class="pf-h">仕事ごと</h3><table class="pf-jobs"><tr><th>仕事</th><th>担当した日</th><th>対応</th><th>正解率</th></tr>
           ${jobs.map((j) => { const x = st.jobs[j]; return `<tr><td>${DATA.jobs[j].name}</td><td>${x.days}日</td><td>${x.n}件</td><td>${pct(x.ok, x.n)}</td></tr>`; }).join('')}</table>` : ''}
@@ -447,7 +449,8 @@ const Cloud = {
     const s = Store.data, st = s.stats || {};
     const stars = Object.values(s.best).reduce((x, b) => x + (b.stars || 0), 0);
     const n = (v) => Math.max(0, Math.round(v || 0));
-    return { medals: n(Goals.medalCount()), stars: n(stars), stars3: n(st.stars3), shifts: n(st.shifts), acc: st.dec ? n((st.good / st.dec) * 100) : -1, combo: n(st.maxCombo), onTime: n(st.onTime), pax: n((st.counterPax || 0) + (st.boarded || 0)) };
+    return { medals: n(Goals.medalCount()), stars: n(stars), stars3: n(st.stars3), shifts: n(st.shifts), acc: st.dec ? n((st.good / st.dec) * 100) : -1, combo: n(st.maxCombo), onTime: n(st.onTime), pax: n((st.counterPax || 0) + (st.boarded || 0)),
+      endless: n(Modes.rec('endless').best), sudden: n(Modes.rec('sudden').best) };
   },
 
   tile(label, val, sub) { return `<div class="pf-tile"><small>${label}</small><b>${val}</b>${sub ? `<span>${sub}</span>` : ''}</div>`; },
@@ -476,7 +479,9 @@ const Cloud = {
             ${this.tile('判断の正確さ', +p.acc >= 0 ? `${n(p.acc)}%` : '—')}
             ${this.tile('最大コンボ', `${n(p.combo)}`)}
             ${this.tile('定刻出発', `${n(p.onTime)}<small>回</small>`)}
-            ${this.tile('対応したお客様', `${U.fmt(n(p.pax))}<small>人</small>`)}` : ''}
+            ${this.tile('対応したお客様', `${U.fmt(n(p.pax))}<small>人</small>`)}
+            ${n(p.endless) ? this.tile('エンドレス最高', `${U.fmt(n(p.endless))}<small>点</small>`) : ''}
+            ${n(p.sudden) ? this.tile('ノーミス最高', `${U.fmt(n(p.sudden))}<small>回連続</small>`) : ''}` : ''}
         </div>
         ${p ? '' : '<p class="small mute">くわしい記録は、この人が次に遊んだあとに表示されます。</p>'}`,
       actions: [{ label: 'ランキングにもどる', cls: 'ghost', run: () => this.showRanking(this._rkKind) }, { label: '閉じる', cls: 'primary' }],
