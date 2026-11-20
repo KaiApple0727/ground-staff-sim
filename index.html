@@ -1095,6 +1095,53 @@ body.phone .uicon.xl { width: 76px; height: 76px; }
 .unlock-list { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }
 body.phone .t-modes-row { grid-template-columns: 1fr 1fr; }
 
+/* ===== 演出(アニメーション) ===== */
+.fx { position: absolute; pointer-events: none; z-index: 40; }
+/* 点数のポップアップ(上のスコアの下に出て、下へ消える) */
+.fx-pts { transform: translate(-50%, 0); font-family: var(--f-dot); font-size: 22px; color: #3ccf7d; text-shadow: 0 2px 0 rgba(0, 0, 0, .55), 0 0 8px rgba(0, 0, 0, .35); white-space: nowrap; animation: fxpts .95s ease-out forwards; }
+.fx-pts.neg { color: #ff6a5a; }
+@keyframes fxpts { 0% { opacity: 0; transform: translate(-50%, -4px) scale(.7); } 18% { opacity: 1; transform: translate(-50%, 6px) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, 44px) scale(1); } }
+.stat b.bump, .stat.bump b { display: inline-block; animation: bump .32s ease-out; }
+@keyframes bump { 35% { transform: scale(1.28); } }
+/* 正解・ミスで画面のふちが光る */
+#app::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 45; }
+#app.fx-good::after { animation: fxgood .42s ease-out; }
+#app.fx-bad::after { animation: fxbad .42s ease-out; }
+@keyframes fxgood { from { box-shadow: inset 0 0 0 5px rgba(60, 207, 125, .85), inset 0 0 40px rgba(60, 207, 125, .35); } to { box-shadow: inset 0 0 0 0 rgba(60, 207, 125, 0); } }
+@keyframes fxbad { from { box-shadow: inset 0 0 0 6px rgba(255, 90, 74, .9), inset 0 0 50px rgba(255, 90, 74, .4); } to { box-shadow: inset 0 0 0 0 rgba(255, 90, 74, 0); } }
+/* コンボ */
+.fx-combo { transform: translate(-50%, -50%); text-align: center; font-family: var(--f-dot); color: var(--amber); text-shadow: 0 3px 0 #1b1f24, 0 0 22px rgba(255, 180, 31, .7); animation: fxcombo .95s ease-out forwards; }
+.fx-combo b { display: block; font-size: 66px; line-height: 1; font-weight: 400; }
+.fx-combo span { font-size: 22px; letter-spacing: .12em; }
+.fx-combo.big b { font-size: 88px; }
+@keyframes fxcombo { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); } 22% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); } 70% { opacity: 1; transform: translate(-50%, -60%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -80%) scale(1); } }
+/* 締め切ったら飛行機が飛び立つ */
+.fx-plane { width: 120px; height: 60px; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .25)); animation: fxfly 2.2s cubic-bezier(.5, 0, .7, 1) forwards; }
+.fx-plane svg { width: 100%; height: 100%; display: block; }
+@keyframes fxfly { 0% { opacity: 0; transform: translate(0, 0) rotate(0); } 12% { opacity: 1; } 35% { transform: translate(calc(var(--fx-w) * .35), -6px) rotate(-4deg); } 100% { opacity: 0; transform: translate(var(--fx-w), calc(var(--fx-h) * -.75)) rotate(-16deg) scale(.55); } }
+/* 紙ふぶき */
+.fx-confetti { inset: 0; overflow: hidden; z-index: 46; }
+.fx-confetti i { position: absolute; top: -16px; width: 9px; height: 9px; border-radius: 2px; animation-name: fxfall; animation-timing-function: cubic-bezier(.3, .6, .6, 1); animation-fill-mode: both; }
+@keyframes fxfall { from { transform: translate(0, 0) rotate(0); opacity: 1; } to { transform: translate(var(--dx), 1000px) rotate(var(--rot)); opacity: .9; } }
+/* 画面の切り替え */
+.scene-in { animation: scenein .26s ease-out; }
+@keyframes scenein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* 結果:星がひとつずつ、数字が順に */
+.r-stars svg { animation: starpop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+.r-stars svg:nth-child(2) { animation-delay: .16s; }
+.r-stars svg:nth-child(3) { animation-delay: .32s; }
+@keyframes starpop { from { opacity: 0; transform: scale(0) rotate(-45deg); } to { opacity: 1; transform: none; } }
+.result .metric { animation: slidein .35s ease-out both; }
+.result .metric:nth-child(2) { animation-delay: .06s; } .result .metric:nth-child(3) { animation-delay: .12s; } .result .metric:nth-child(4) { animation-delay: .18s; }
+/* タイトル:出発案内の上を飛行機が横切る */
+.t-board { position: relative; }
+.t-plane { position: absolute; left: -14%; top: 46%; width: 64px; opacity: 0; pointer-events: none; animation: tplane 18s linear 1.5s infinite; }
+.t-plane svg { width: 100%; display: block; }
+@keyframes tplane { 0% { left: -14%; top: 52%; opacity: 0; transform: rotate(-9deg); } 3% { opacity: .9; } 30% { left: 112%; top: 6%; opacity: .9; transform: rotate(-9deg); } 31%, 100% { left: 112%; top: 6%; opacity: 0; } }
+/* アニメーション OFF(タイトルの設定・端末の設定) */
+body.no-anim .fx, body.no-anim .t-plane { display: none !important; }
+body.no-anim .scene-in, body.no-anim .r-stars svg, body.no-anim .result .metric, body.no-anim .bump, body.no-anim #app::after { animation: none !important; }
+
 </style>
 </head>
 <body>
@@ -1109,6 +1156,18 @@ body.phone .t-modes-row { grid-template-columns: 1fr 1fr; }
 /* ---------- アップデート履歴(新しいものを上に足していく) ----------
    v: バージョン(00-config.js の CONFIG.version と合わせる) / date: 公開した日(わからないものは空) / items: 変わったこと */
 const CHANGELOG = [
+  {
+    v: '0.7.1', date: '2026-11-20', title: 'アニメーション',
+    items: [
+      '点数が入ると、上のスコアから「+120」などが浮かび上がる',
+      '正解・ミスのとき、画面のふちが緑・赤に光る',
+      'コンボが5・10・15…になると「COMBO!」',
+      '搭乗ゲートを締め切ると、飛行機が飛び立つ',
+      '結果の画面で、星がひとつずつ出て、スコアが数え上がる。★3つ・自己ベスト・昇進・解禁で紙ふぶき',
+      'タイトル画面の出発案内の上を、ときどき飛行機が横切る',
+      'タイトル画面の「アニメーション: ON/OFF」で止められる(端末の「視差効果を減らす」設定でも止まる)',
+    ],
+  },
   {
     v: '0.7.0', date: '2026-11-20', title: 'チャレンジモード',
     items: [
@@ -1187,7 +1246,7 @@ const CHANGELOG = [
    - 新しい業務(シーン)  → Scenes.xxx = { enter, update, onAct } を作り Game.go('xxx')
    ===================================================================== */
 const CONFIG = {
-  version: '0.7.0',
+  version: '0.7.1',
   saveKey: 'gss-save-v1',
   startDate: '2026-12-01',   // 勤務1日目の日付
   gateSpeed: 6,              // 搭乗ゲートの時間の速さ(実時間1秒 = ゲーム内6秒)
@@ -2475,7 +2534,7 @@ Object.assign(Art, {
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, stats: this.defStats(), modes: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, stats: this.defStats(), modes: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false, anim: true } }; },
   // これまでの統計(勤務を終えるたびに足していく)
   defStats() { return { shifts: 0, minutes: 0, counterPax: 0, boarded: 0, onTime: 0, dec: 0, good: 0, mistakes: 0, maxCombo: 0, stars3: 0, jobs: {} }; },
   load(snap) {
@@ -2831,6 +2890,114 @@ const Fit = {
   },
 };
 
+/* ===== 08-fx.js ===== */
+/* ---------- アニメーション(演出) ----------
+   点数のポップアップ・正解/ミスの光・コンボ・出発する飛行機・紙ふぶき・数字のカウントアップ・画面の切り替え。
+   どれもゲームを待たせない(操作はすぐできる)。タイトルの「アニメーション: OFF」か、
+   端末の「視差効果を減らす」設定のときは出さない */
+const FX = {
+  on() {
+    if (Store.data && Store.data.settings.anim === false) return false;
+    try { return !window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return true; }
+  },
+  app() { return document.getElementById('app'); },
+
+  // 画面(#app)の中の座標。#app は拡大・縮小されているので、その分を戻す
+  pos(el) {
+    const app = this.app(), a = app.getBoundingClientRect(), k = a.width / app.offsetWidth || 1, r = el.getBoundingClientRect();
+    return { x: (r.left + r.width / 2 - a.left) / k, y: (r.top + r.height / 2 - a.top) / k, w: r.width / k, h: r.height / k };
+  },
+  add(cls, html, style, ms) {
+    const app = this.app(); if (!app) return null;
+    const el = document.createElement('div');
+    el.className = `fx ${cls}`; el.innerHTML = html || ''; el.setAttribute('aria-hidden', 'true');
+    Object.assign(el.style, style || {});
+    app.appendChild(el);
+    setTimeout(() => el.remove(), ms || 1200);
+    return el;
+  },
+  // 同じアニメーションを、もう一度最初から
+  replay(el, cls) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); },
+
+  // 上の「本日のスコア」から、点数が浮かび上がる
+  points(pts) {
+    if (!pts || !this.on()) return;
+    const sc = document.getElementById('hud-score'); if (!sc || !sc.offsetParent) return;
+    const p = this.pos(sc);
+    this.add(`fx-pts ${pts < 0 ? 'neg' : ''}`, U.signed(pts), { left: `${p.x}px`, top: `${p.y + p.h / 2}px` }, 1000);
+    this.replay(sc, 'bump');
+  },
+
+  // 正解・ミスのとき、画面のふちが一瞬光る
+  flash(ok) {
+    if (!this.on()) return;
+    const app = this.app(); if (!app) return;
+    app.classList.remove('fx-good', 'fx-bad'); void app.offsetWidth; app.classList.add(ok ? 'fx-good' : 'fx-bad');
+    clearTimeout(this._fl); this._fl = setTimeout(() => app.classList.remove('fx-good', 'fx-bad'), 420);
+  },
+
+  // コンボが 5・10・15… になったとき
+  combo(n) {
+    if (!this.on() || n < 5 || n % 5) return;
+    const st = document.getElementById('stage'); const p = st ? this.pos(st) : { x: 640, y: 300, h: 0 };
+    this.add(`fx-combo ${n >= 20 ? 'big' : ''}`, `<b>${n}</b><span>COMBO!</span>`, { left: `${p.x}px`, top: `${p.y - p.h * 0.18}px` }, 1000);
+    this.replay(document.getElementById('hud-combo-wrap'), 'bump');
+  },
+
+  // 搭乗ゲートを締め切ったとき、飛行機が飛び立つ
+  takeoff() {
+    if (!this.on()) return;
+    const st = document.getElementById('stage'); if (!st) return;
+    const p = this.pos(st);
+    this.add('fx-plane', `<svg viewBox="0 0 120 60"><path d="M6 36 L44 34 L66 8 L76 8 L64 34 L98 33 Q114 32 114 38 Q114 44 98 43 L64 42 L76 58 L66 58 L44 44 L18 43 L10 52 L4 52 L8 42 Z" fill="#fff" stroke="#1f3a8a" stroke-width="2"/><path d="M88 36h4M80 36h4M72 36h4" stroke="#1f3a8a" stroke-width="2.2"/></svg>`,
+      { left: `${p.x - p.w / 2}px`, top: `${p.y + p.h * 0.25}px`, '--fx-w': `${p.w}px`, '--fx-h': `${p.h}px` }, 2300);
+  },
+
+  // 紙ふぶき(自己ベスト・昇進・解禁など)
+  confetti(n = 46) {
+    if (!this.on()) return;
+    const app = this.app(); if (!app) return;
+    const W = app.offsetWidth, colors = ['#ffb41f', '#1f3a8a', '#23946c', '#d9622b', '#c23f78', '#4a90d9', '#ffffff'];
+    const box = this.add('fx-confetti', '', {}, 2600);
+    if (!box) return;
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement('i');
+      c.style.left = `${Math.random() * W}px`;
+      c.style.background = colors[i % colors.length];
+      c.style.setProperty('--dx', `${(Math.random() - 0.5) * 160}px`);
+      c.style.setProperty('--rot', `${(Math.random() * 2 - 1) * 720}deg`);
+      c.style.animationDelay = `${Math.random() * 0.45}s`;
+      c.style.animationDuration = `${1.5 + Math.random() * 0.8}s`;
+      if (i % 3 === 0) { c.style.width = '6px'; c.style.height = '12px'; }
+      box.appendChild(c);
+    }
+  },
+
+  // 数字を 0 から数え上げる(結果の画面のスコアなど)
+  countUp(el, to, ms = 800) {
+    if (!el) return;
+    if (!this.on()) { el.textContent = U.fmt(to); return; }
+    const t0 = performance.now();
+    const step = (t) => {
+      if (!el.isConnected) return;
+      const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = U.fmt(Math.round(to * e));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  },
+
+  // 画面が切り替わったとき、中身がふわっと入ってくる
+  enter() {
+    if (!this.on()) return;
+    const el = document.querySelector('#app .stage') || document.querySelector('#app > :not(.fx)');
+    this.replay(el, 'scene-in');
+  },
+
+  // 設定(タイトルのボタン)に合わせて、body に印を付ける(CSS のアニメーションも止める)
+  apply() { document.body.classList.toggle('no-anim', !this.on()); },
+};
+
 /* ===== 09-progress.js ===== */
 /* ---------- 長く遊ぶための仕組み(昇進・特別な日・目標) ---------- */
 const Progress = {
@@ -2899,6 +3066,7 @@ const Game = {
   boot(snap) {
     Store.load(snap);
     Fit.init();
+    FX.apply();
     if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => Store.data);
     document.addEventListener('click', (e) => this.onClick(e));
     document.addEventListener('keydown', (e) => this.onKey(e));
@@ -2914,6 +3082,7 @@ const Game = {
     Modal.close();
     this.scene = Scenes[id];
     this.scene.enter(arg);
+    FX.enter();
   },
 
   loop(t) {
@@ -3016,15 +3185,17 @@ const Game = {
     this.go('briefing');
   },
 
-  addScore(part, pts) { this.day.score[part] += pts; Hud.refreshStats(); },
+  addScore(part, pts) { this.day.score[part] += pts; Hud.refreshStats(); FX.points(pts); },
   addSat(d) { this.day.sat = U.clamp(this.day.sat + d, 0, 100); Hud.refreshStats(); },
   // 判断の記録。正解が続くとコンボになり、5連続からボーナス点(コンボ数の半分、1回につき最大10点)
   decision(ok) {
     const d = this.day; d.dec++;
     if (!ok && this.run) Modes.fail(Modes.lastBad());   // ミスするまで続くモードは、ここで終わり
+    FX.flash(ok);
     if (ok) {
       d.good++; d.combo++; d.maxCombo = Math.max(d.maxCombo, d.combo);
       if (d.combo >= 5) d.score.combo += Math.min(10, Math.floor(d.combo / 2));
+      FX.combo(d.combo);
     } else d.combo = 0;
     Hud.refreshStats();
   },
@@ -3764,6 +3935,7 @@ Scenes.title = {
         <div class="t-kicker">${Flap.word('DEPARTURES 出発')}</div>
         <h1 class="t-main" aria-label="グランドスタッフ シミュレーター">${Flap.word('グランドスタッフ')}</h1>
         <div class="t-sub">${Flap.word('SIMULATOR')}</div>
+        <div class="t-plane" aria-hidden="true"><svg viewBox="0 0 120 60"><path d="M6 36 L44 34 L66 8 L76 8 L64 34 L98 33 Q114 32 114 38 Q114 44 98 43 L64 42 L76 58 L66 58 L44 44 L18 43 L10 52 L4 52 L8 42 Z" fill="#ffb41f"/></svg></div>
         <div class="t-rows board">${demo.map((d) => `<div class="brow st-${d[5]}"><span class="cell time">${d[0]}</span><span class="cell fno">${d[1]}</span><span class="cell dest">${d[2]}</span><span class="cell gate">${d[3]}</span><span class="cell st">${d[4]}</span></div>`).join('')}</div>
       </section>
       <section class="t-panel ${Cloud.enabled() ? 'has-top' : ''}">
@@ -3792,6 +3964,7 @@ Scenes.title = {
         ${Modes.titleHTML()}
         <div class="t-opts">
           <button class="btn ghost small" data-act="speech" aria-pressed="${s.settings.speech}">アナウンス読み上げ: ${s.settings.speech ? 'ON' : 'OFF'}</button>
+          <button class="btn ghost small" data-act="anim" aria-pressed="${s.settings.anim !== false}">アニメーション: ${s.settings.anim !== false ? 'ON' : 'OFF'}</button>
           <button class="btn ghost small" data-act="g:changelog">アップデート履歴${!first && s.settings.seenVer !== CONFIG.version ? '<span class="new-dot">NEW</span>' : ''}</button>
           ${first ? '' : '<button class="btn ghost small" data-act="reset">最初からやり直す</button>'}
         </div>
@@ -3810,6 +3983,7 @@ Scenes.title = {
     else if (a === 'pick') { const n = +ds.n; if (n >= 1 && n < Store.data.day) Game.startDay(n); }   // クリアした日だけ
     else if (a === 'locked') { Sfx.buzz(); Toast.show(`${ds.n}日目は、${Store.data.day}日目${+ds.n - Store.data.day > 1 ? `から${+ds.n - 1}日目まで` : ''}をクリアすると遊べます`, 'info', 3000); }
     else if (a === 'speech') { const st = Store.data.settings; st.speech = !st.speech; Store.save(); this.enter(); }
+    else if (a === 'anim') { const st = Store.data.settings; st.anim = st.anim === false; Store.saveLocal(); FX.apply(); this.enter(); if (FX.on()) FX.confetti(24); }
     else if (a === 'reset') {
       Modal.show({ soft: true,
         title: '最初からやり直しますか？', body: '<p>勤務日数・スコア・ランクがすべてリセットされます。</p>',
@@ -4843,6 +5017,7 @@ Scenes.gate = {
     s.announce = `${f.num}便、${f.ap.name}行きの搭乗手続きを締め切りました。`;
     Sfx.chimeEnd();
     this.renderAll();
+    FX.takeoff();
     setTimeout(() => {
       if (Game.scene !== this) return;
       f.phase = 'departed'; Hud.redrawBoard();
@@ -5629,10 +5804,12 @@ Scenes.result = {
         <section><h3>${d.gateFlight.gate}番搭乗口</h3><p class="mute small">問題なく通したお客様 ${d.stats.scanned || 0}名(個別の記録は省略)</p>${list(logs('gate'))}</section>
       </div>
     </div>`);
+    FX.countUp(document.querySelector('.r-score b'), score);
+    if (!d.fxShown) { d.fxShown = true; if (stars === 3 || d.recordBest) setTimeout(() => FX.confetti(), 500); }
     if (d.rankUp && !d.rankShown) {
       d.rankShown = true;
       const job = d.rankUp.unlock ? DATA.jobs[d.rankUp.unlock] : null;
-      Sfx.chime();
+      Sfx.chime(); FX.confetti(60);
       Modal.show({
         title: `昇進しました！「${d.rankUp.name}」`,
         body: job ? `<p>新しい仕事<b>「${job.name}」</b>が、次の勤務からカウンターと搭乗ゲートの間に加わります。</p><p class="mute">${job.desc} ルールはマニュアルにも追加されました。</p>` : '<p>これからもこの調子でがんばりましょう。</p>',
@@ -5645,7 +5822,7 @@ Scenes.result = {
   showUnlock(d) {
     if (!d.modesUnlocked || d.modesShown) return;
     d.modesShown = true;
-    Sfx.chime();
+    Sfx.chime(); FX.confetti(70);
     Modal.show({
       title: 'チャレンジモードが解禁されました！',
       body: `<p>30日目のクリア、おめでとうございます。タイトル画面から、2つのモードが遊べるようになりました。</p>
@@ -5686,6 +5863,7 @@ Scenes.result = {
         <section><h3>${d.gateFlight.gate}番搭乗口</h3>${list(logs('gate'))}</section>
       </div>
     </div>`);
+    FX.countUp(document.querySelector('.r-score b'), score);
   },
   update(dt) { Hud.tick(dt, 0); },
   onAct(a) {
@@ -5788,6 +5966,7 @@ const Modes = {
 
   summary(r, res, failed) {
     const K = this.KINDS[r.kind];
+    if (res.newBest && res.val > 0) FX.confetti();
     Modal.show({
       title: failed ? 'ゲームオーバー' : `${K.name} 終了`,
       body: `<div class="mode-rec big"><div><small>${r.kind === 'sudden' ? '連続正解' : 'スコア'}</small><b>${r.kind === 'sudden' ? `${U.fmt(res.good)}回` : `${U.fmt(res.score)}点`}</b></div>
@@ -5821,6 +6000,7 @@ Scenes.runover = {
       ${res.newBest ? '<p><span class="pill ok">自己ベスト更新！</span></p>' : `<p class="mute small">自己ベスト 連続${U.fmt(Modes.rec('sudden').best)}回</p>`}
       <div class="r-actions"><button class="btn primary big" data-act="again">もう一度</button><button class="btn ghost" data-act="title">タイトルへ</button></div>
     </section></div>`);
+    if (res.newBest && res.val > 0) setTimeout(() => FX.confetti(), 300);
     Game.run = null;   // 上のバーに「ノーミス ステージ○」を出してから終わりにする
   },
   update(dt) { Hud.tick(dt, 0); },

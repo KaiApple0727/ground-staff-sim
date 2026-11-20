@@ -397,6 +397,7 @@ Scenes.gate = {
     s.announce = `${f.num}便、${f.ap.name}行きの搭乗手続きを締め切りました。`;
     Sfx.chimeEnd();
     this.renderAll();
+    FX.takeoff();
     setTimeout(() => {
       if (Game.scene !== this) return;
       f.phase = 'departed'; Hud.redrawBoard();

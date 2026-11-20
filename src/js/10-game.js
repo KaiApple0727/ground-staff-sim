@@ -8,6 +8,7 @@ const Game = {
   boot(snap) {
     Store.load(snap);
     Fit.init();
+    FX.apply();
     if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => Store.data);
     document.addEventListener('click', (e) => this.onClick(e));
     document.addEventListener('keydown', (e) => this.onKey(e));
@@ -23,6 +24,7 @@ const Game = {
     Modal.close();
     this.scene = Scenes[id];
     this.scene.enter(arg);
+    FX.enter();
   },
 
   loop(t) {
@@ -125,15 +127,17 @@ const Game = {
     this.go('briefing');
   },
 
-  addScore(part, pts) { this.day.score[part] += pts; Hud.refreshStats(); },
+  addScore(part, pts) { this.day.score[part] += pts; Hud.refreshStats(); FX.points(pts); },
   addSat(d) { this.day.sat = U.clamp(this.day.sat + d, 0, 100); Hud.refreshStats(); },
   // 判断の記録。正解が続くとコンボになり、5連続からボーナス点(コンボ数の半分、1回につき最大10点)
   decision(ok) {
     const d = this.day; d.dec++;
     if (!ok && this.run) Modes.fail(Modes.lastBad());   // ミスするまで続くモードは、ここで終わり
+    FX.flash(ok);
     if (ok) {
       d.good++; d.combo++; d.maxCombo = Math.max(d.maxCombo, d.combo);
       if (d.combo >= 5) d.score.combo += Math.min(10, Math.floor(d.combo / 2));
+      FX.combo(d.combo);
     } else d.combo = 0;
     Hud.refreshStats();
   },

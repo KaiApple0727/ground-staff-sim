@@ -1,7 +1,7 @@
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, stats: this.defStats(), modes: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, stats: this.defStats(), modes: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false, anim: true } }; },
   // これまでの統計(勤務を終えるたびに足していく)
   defStats() { return { shifts: 0, minutes: 0, counterPax: 0, boarded: 0, onTime: 0, dec: 0, good: 0, mistakes: 0, maxCombo: 0, stars3: 0, jobs: {} }; },
   load(snap) {

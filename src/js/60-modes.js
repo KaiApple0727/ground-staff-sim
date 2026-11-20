@@ -87,6 +87,7 @@ const Modes = {
 
   summary(r, res, failed) {
     const K = this.KINDS[r.kind];
+    if (res.newBest && res.val > 0) FX.confetti();
     Modal.show({
       title: failed ? 'ゲームオーバー' : `${K.name} 終了`,
       body: `<div class="mode-rec big"><div><small>${r.kind === 'sudden' ? '連続正解' : 'スコア'}</small><b>${r.kind === 'sudden' ? `${U.fmt(res.good)}回` : `${U.fmt(res.score)}点`}</b></div>
@@ -120,6 +121,7 @@ Scenes.runover = {
       ${res.newBest ? '<p><span class="pill ok">自己ベスト更新!</span></p>' : `<p class="mute small">自己ベスト 連続${U.fmt(Modes.rec('sudden').best)}回</p>`}
       <div class="r-actions"><button class="btn primary big" data-act="again">もう一度</button><button class="btn ghost" data-act="title">タイトルへ</button></div>
     </section></div>`);
+    if (res.newBest && res.val > 0) setTimeout(() => FX.confetti(), 300);
     Game.run = null;   // 上のバーに「ノーミス ステージ○」を出してから終わりにする
   },
   update(dt) { Hud.tick(dt, 0); },

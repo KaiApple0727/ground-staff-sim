@@ -77,10 +77,12 @@ Scenes.result = {
         <section><h3>${d.gateFlight.gate}番搭乗口</h3><p class="mute small">問題なく通したお客様 ${d.stats.scanned || 0}名(個別の記録は省略)</p>${list(logs('gate'))}</section>
       </div>
     </div>`);
+    FX.countUp(document.querySelector('.r-score b'), score);
+    if (!d.fxShown) { d.fxShown = true; if (stars === 3 || d.recordBest) setTimeout(() => FX.confetti(), 500); }
     if (d.rankUp && !d.rankShown) {
       d.rankShown = true;
       const job = d.rankUp.unlock ? DATA.jobs[d.rankUp.unlock] : null;
-      Sfx.chime();
+      Sfx.chime(); FX.confetti(60);
       Modal.show({
         title: `昇進しました!「${d.rankUp.name}」`,
         body: job ? `<p>新しい仕事<b>「${job.name}」</b>が、次の勤務からカウンターと搭乗ゲートの間に加わります。</p><p class="mute">${job.desc} ルールはマニュアルにも追加されました。</p>` : '<p>これからもこの調子でがんばりましょう。</p>',
@@ -93,7 +95,7 @@ Scenes.result = {
   showUnlock(d) {
     if (!d.modesUnlocked || d.modesShown) return;
     d.modesShown = true;
-    Sfx.chime();
+    Sfx.chime(); FX.confetti(70);
     Modal.show({
       title: 'チャレンジモードが解禁されました!',
       body: `<p>30日目のクリア、おめでとうございます。タイトル画面から、2つのモードが遊べるようになりました。</p>
@@ -134,6 +136,7 @@ Scenes.result = {
         <section><h3>${d.gateFlight.gate}番搭乗口</h3>${list(logs('gate'))}</section>
       </div>
     </div>`);
+    FX.countUp(document.querySelector('.r-score b'), score);
   },
   update(dt) { Hud.tick(dt, 0); },
   onAct(a) {

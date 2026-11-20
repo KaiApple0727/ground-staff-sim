@@ -10,7 +10,7 @@
    - 新しい業務(シーン)  → Scenes.xxx = { enter, update, onAct } を作り Game.go('xxx')
    ===================================================================== */
 const CONFIG = {
-  version: '0.7.0',
+  version: '0.7.1',
   saveKey: 'gss-save-v1',
   startDate: '2026-12-01',   // 勤務1日目の日付
   gateSpeed: 6,              // 搭乗ゲートの時間の速さ(実時間1秒 = ゲーム内6秒)

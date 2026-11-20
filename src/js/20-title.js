@@ -14,6 +14,7 @@ Scenes.title = {
         <div class="t-kicker">${Flap.word('DEPARTURES 出発')}</div>
         <h1 class="t-main" aria-label="グランドスタッフ シミュレーター">${Flap.word('グランドスタッフ')}</h1>
         <div class="t-sub">${Flap.word('SIMULATOR')}</div>
+        <div class="t-plane" aria-hidden="true"><svg viewBox="0 0 120 60"><path d="M6 36 L44 34 L66 8 L76 8 L64 34 L98 33 Q114 32 114 38 Q114 44 98 43 L64 42 L76 58 L66 58 L44 44 L18 43 L10 52 L4 52 L8 42 Z" fill="#ffb41f"/></svg></div>
         <div class="t-rows board">${demo.map((d) => `<div class="brow st-${d[5]}"><span class="cell time">${d[0]}</span><span class="cell fno">${d[1]}</span><span class="cell dest">${d[2]}</span><span class="cell gate">${d[3]}</span><span class="cell st">${d[4]}</span></div>`).join('')}</div>
       </section>
       <section class="t-panel ${Cloud.enabled() ? 'has-top' : ''}">
@@ -42,6 +43,7 @@ Scenes.title = {
         ${Modes.titleHTML()}
         <div class="t-opts">
           <button class="btn ghost small" data-act="speech" aria-pressed="${s.settings.speech}">アナウンス読み上げ: ${s.settings.speech ? 'ON' : 'OFF'}</button>
+          <button class="btn ghost small" data-act="anim" aria-pressed="${s.settings.anim !== false}">アニメーション: ${s.settings.anim !== false ? 'ON' : 'OFF'}</button>
           <button class="btn ghost small" data-act="g:changelog">アップデート履歴${!first && s.settings.seenVer !== CONFIG.version ? '<span class="new-dot">NEW</span>' : ''}</button>
           ${first ? '' : '<button class="btn ghost small" data-act="reset">最初からやり直す</button>'}
         </div>
@@ -60,6 +62,7 @@ Scenes.title = {
     else if (a === 'pick') { const n = +ds.n; if (n >= 1 && n < Store.data.day) Game.startDay(n); }   // クリアした日だけ
     else if (a === 'locked') { Sfx.buzz(); Toast.show(`${ds.n}日目は、${Store.data.day}日目${+ds.n - Store.data.day > 1 ? `から${+ds.n - 1}日目まで` : ''}をクリアすると遊べます`, 'info', 3000); }
     else if (a === 'speech') { const st = Store.data.settings; st.speech = !st.speech; Store.save(); this.enter(); }
+    else if (a === 'anim') { const st = Store.data.settings; st.anim = st.anim === false; Store.saveLocal(); FX.apply(); this.enter(); if (FX.on()) FX.confetti(24); }
     else if (a === 'reset') {
       Modal.show({ soft: true,
         title: '最初からやり直しますか?', body: '<p>勤務日数・スコア・ランクがすべてリセットされます。</p>',
