@@ -40,7 +40,7 @@ const Game = {
     if (!el || el.disabled) return;
     Sfx.ensure();
     const act = el.dataset.act;
-    if (act.startsWith('g:')) { this.globalAct(act.slice(2)); return; }
+    if (act.startsWith('g:')) { this.globalAct(act.slice(2), el.dataset); return; }
     if (this.scene && this.scene.onAct) this.scene.onAct(act, el.dataset, el);
   },
 
@@ -51,7 +51,7 @@ const Game = {
     if (this.scene && this.scene.onKey) this.scene.onKey(e);
   },
 
-  globalAct(a) {
+  globalAct(a, ds = {}) {
     if (a === 'manual') { Manual.open ? Manual.hide() : Manual.show(); }
     else if (a === 'manual-close') Manual.hide();
     else if (a === 'pause') this.setPause(!this.paused);
@@ -62,6 +62,8 @@ const Game = {
     else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
     else if (a === 'rename') Cloud.askName(false);
     else if (a === 'profile') Cloud.showProfile();
+    else if (a === 'icon') Cloud.showIconPicker();
+    else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'logout') {
       Modal.show({
         title: 'ログアウトしますか?',

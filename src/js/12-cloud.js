@@ -102,6 +102,7 @@ const Cloud = {
     if (cloud && cloud.data) Store.merge(cloud.data);
     Store.data.owner = u.uid;
     this.user.name = (cloud && cloud.name) || null;
+    this.user.icon = cloud && UIcon.valid(cloud.icon) ? cloud.icon : null;
     this.status = 'in';
     if (!this.user.name) this.askName(true);
     else { Store.save(); Toast.show(`${U.esc(this.user.name)}さん、ログインしました。どの端末でも続きから遊べます`, 'ok', 3600); }
@@ -146,10 +147,17 @@ const Cloud = {
       const snap = await F.getDoc(F.doc(db, 'saves', uid));
       if (snap.exists() && snap.data().data && Store.merge(snap.data().data)) Store.saveLocal();
       if (!this.user || this.user.uid !== uid) return;
-      await F.setDoc(F.doc(db, 'saves', uid), { data: JSON.parse(JSON.stringify(Store.cloudData())), name, updatedAt: F.serverTimestamp() });
-      await F.setDoc(F.doc(db, 'ranking', uid), {
-        name, total: Math.max(0, Math.round(d.total || 0)), best: Math.max(0, Math.round((d.bestDay && d.bestDay.score) || 0)), day: Math.round(d.day || 1), updatedAt: F.serverTimestamp(),
-      });
+      const icon = UIcon.valid(this.user.icon) ? this.user.icon : null;
+      await F.setDoc(F.doc(db, 'saves', uid), { data: JSON.parse(JSON.stringify(Store.cloudData())), name, ...(icon ? { icon } : {}), updatedAt: F.serverTimestamp() });
+      const row = { name, total: Math.max(0, Math.round(d.total || 0)), best: Math.max(0, Math.round((d.bestDay && d.bestDay.score) || 0)), day: Math.round(d.day || 1), updatedAt: F.serverTimestamp() };
+      try { await F.setDoc(F.doc(db, 'ranking', uid), icon ? { ...row, icon } : row); this.oldRules = false; }
+      catch (e) {
+        // Firestore のルールが古い(icon を受け付けない)ときは、アイコンなしでランキングだけ更新する
+        if (!icon || (e && e.code) !== 'permission-denied') throw e;
+        await F.setDoc(F.doc(db, 'ranking', uid), row);
+        if (!this.oldRules) Toast.show('アイコンをランキングに出すには、Firestore のルールの更新が必要です', 'info', 5000);
+        this.oldRules = true;
+      }
       if (this.user && this.user.uid === uid) this.status = 'saved';
     } catch (e) {
       console.warn(e); this.status = 'error';
@@ -173,7 +181,7 @@ const Cloud = {
     Modal.show({
       title: 'プロフィール',
       wide: true,
-      body: `<div class="pf-head"><span class="acct-ic big" aria-hidden="true">☁</span>
+      body: `<div class="pf-head"><button class="pf-icon" data-act="g:icon" aria-label="アイコンを変える">${UIcon.html(this.user.icon, 'lg')}<span>変える</span></button>
           <div class="pf-who"><b>${U.esc(this.user.name)}</b>さん<small class="${this.status === 'error' ? 'bad' : 'ok'}">${status}</small></div>
           <div class="pf-rank"><small>ランク</small><b>${r.name}</b><span>${nx ? `次の「${nx.name}」まで あと${U.fmt(nx.min - s.total)}点` : '最高ランクです'}</span></div></div>
         <h3 class="pf-h">これまでの統計</h3>
@@ -194,9 +202,56 @@ const Cloud = {
         </div>
         ${jobs.length ? `<h3 class="pf-h">仕事ごと</h3><table class="pf-jobs"><tr><th>仕事</th><th>担当した日</th><th>対応</th><th>正解率</th></tr>
           ${jobs.map((j) => { const x = st.jobs[j]; return `<tr><td>${DATA.jobs[j].name}</td><td>${x.days}日</td><td>${x.n}件</td><td>${pct(x.ok, x.n)}</td></tr>`; }).join('')}</table>` : ''}
-        ${bests.length ? `<h3 class="pf-h">日ごとの最高点</h3><div class="pf-bars" role="img" aria-label="日ごとの最高点のグラフ">${bests.map((b) => `<div class="pf-bar" title="${b.n}日目 ${U.fmt(b.score)}点"><i style="height:${Math.max(3, (Math.max(0, b.score) / max) * 100)}%"></i><span>${b.n}</span></div>`).join('')}</div>` : ''}`,
-      actions: [{ label: '名前を変える', cls: 'ghost', run: () => this.askName(false) }, { label: 'ログアウト', cls: 'ghost', run: () => Game.globalAct('logout') }, { label: '閉じる', cls: 'primary' }],
+        ${bests.length ? `<h3 class="pf-h">日ごとの最高点</h3><div class="pf-bars" role="img" aria-label="日ごとの最高点のグラフ">${bests.map((b) => `<div class="pf-bar" title="${b.n}日目 ${U.fmt(b.score)}点"><i style="height:${Math.max(3, (Math.max(0, b.score) / max) * 100)}%"></i><span>${b.n}</span></div>`).join('')}</div>` : ''}
+        ${this.oldRules ? '<p class="small warn-note">アイコンをランキングに出すには、Firestore のルールの更新が必要です。</p>' : ''}`,
+      actions: [{ label: 'アイコンを変える', cls: 'ghost', run: () => this.showIconPicker() }, { label: '名前を変える', cls: 'ghost', run: () => this.askName(false) }, { label: 'ログアウト', cls: 'ghost', run: () => Game.globalAct('logout') }, { label: '閉じる', cls: 'primary' }],
     });
+  },
+
+  /* ===== アイコンを変える ===== */
+  showIconPicker() {
+    if (!this.user) return;
+    this._pend = UIcon.valid(this.user.icon) ? this.user.icon : UIcon.DEF;
+    const custom = this._pend.startsWith('data:');
+    Modal.show({
+      title: 'アイコンを変える',
+      body: `<div class="ic-top"><div class="ic-prev" id="icprev">${UIcon.html(this._pend, 'xl')}</div>
+          <div><p class="small">好きな絵を選ぶか、写真などの画像を選んでください。画像は、まん中の正方形が使われます。</p>
+          <label class="btn ic-file"><input type="file" accept="image/*" id="icfile">画像から選ぶ</label></div></div>
+        <div class="ic-grid" role="group" aria-label="アイコンの絵">${UIcon.ids().map((id) => `<button class="ic-opt ${!custom && id === this._pend ? 'sel' : ''}" data-act="g:icon-pick" data-id="${id}" aria-pressed="${!custom && id === this._pend}" title="${UIcon.P[id].name}">${UIcon.html(id)}</button>`).join('')}</div>
+        <p class="small mute">アイコンはランキングで、ほかの人にも見えます。人に見せてよい画像を選んでください。</p>`,
+      actions: [{ label: 'やめる', cls: 'ghost', run: () => this.showProfile() }, { label: 'このアイコンにする', cls: 'primary', run: () => this.setIcon(this._pend) }],
+    });
+    const f = document.getElementById('icfile');
+    if (f) f.addEventListener('change', () => this.pickFile(f.files && f.files[0]));
+  },
+
+  pickIcon(id) {
+    if (!UIcon.P[id]) return;
+    this._pend = id; Sfx.pop();
+    this.showPend();
+  },
+
+  async pickFile(file) {
+    if (!file) return;
+    const url = await UIcon.fromFile(file);
+    if (!url) { Toast.show('この画像は使えませんでした。ほかの画像(JPEG・PNG)を選んでください', 'bad', 4200); return; }
+    this._pend = url;
+    this.showPend();
+  },
+
+  showPend() {
+    const p = document.getElementById('icprev'); if (p) p.innerHTML = UIcon.html(this._pend, 'xl');
+    document.querySelectorAll('.ic-opt').forEach((b) => { const on = b.dataset.id === this._pend; b.classList.toggle('sel', on); b.setAttribute('aria-pressed', String(on)); });
+  },
+
+  setIcon(v) {
+    if (!this.user || !UIcon.valid(v)) return;
+    this.user.icon = v;
+    Store.save();
+    this.refresh(true);
+    Toast.show('アイコンを変えました', 'ok', 2400);
+    this.showProfile();
   },
 
   /* ===== ランキング ===== */
@@ -221,7 +276,7 @@ const Cloud = {
       const rows = []; snap.forEach((doc) => rows.push({ uid: doc.id, ...doc.data() }));
       if (!el()) return;
       el().innerHTML = rows.length ? rows.map((r, i) => `<li class="${this.user && r.uid === this.user.uid ? 'me' : ''}">
-          <span class="rk-no">${i + 1}</span><span class="rk-name">${U.esc(r.name || '名無し')}${this.user && r.uid === this.user.uid ? ' <em>あなた</em>' : ''}</span>
+          <span class="rk-no">${i + 1}</span>${UIcon.html(this.user && r.uid === this.user.uid ? this.user.icon : UIcon.valid(r.icon) ? r.icon : UIcon.DEF, 'sm')}<span class="rk-name">${U.esc(r.name || '名無し')}${this.user && r.uid === this.user.uid ? ' <em>あなた</em>' : ''}</span>
           <span class="rk-day">${r.day || 1}日目</span><b class="rk-val">${U.fmt(r[kind] || 0)}<small>点</small></b></li>`).join('')
         : '<li class="rk-msg">まだだれもいません。1日目をクリアすると、ここにのります。</li>';
     } catch (e) {
@@ -237,7 +292,7 @@ const Cloud = {
   topHTML() {
     if (!this.enabled()) return '';
     return `<div class="t-top" id="ttop"><button class="btn small t-top-btn" data-act="g:ranking"><span aria-hidden="true">🏆</span>ランキング</button>
-      ${this.user ? `<button class="t-top-me" data-act="g:profile" aria-label="プロフィールと統計を見る"><span class="acct-ic sm" aria-hidden="true">☁</span><span class="t-top-nm">${U.esc(this.user.name || '…')}</span><span class="t-top-st ${this.status === 'error' ? 'bad' : ''}" aria-hidden="true">${this.status === 'saving' ? '…' : this.status === 'error' ? '!' : ''}</span></button>`
+      ${this.user ? `<button class="t-top-me" data-act="g:profile" aria-label="プロフィールと統計を見る">${UIcon.html(this.user.icon, 'sm')}<span class="t-top-nm">${U.esc(this.user.name || '…')}</span><span class="t-top-st ${this.status === 'error' ? 'bad' : ''}" aria-hidden="true">${this.status === 'saving' ? '…' : this.status === 'error' ? '!' : ''}</span></button>`
         : `<button class="btn small t-top-btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>ログイン</button>`}</div>`;
   },
 

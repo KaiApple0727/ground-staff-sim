@@ -18,7 +18,8 @@
 - Googleアカウントでログインすると、記録が Cloud Firestore に保存され、どの端末でも続きから遊べる。ランキング(累計・1日の最高点)にも参加できる
 - ログインしなくても遊べる(記録はその端末だけ)
 - 設定は `src/js/00-firebase.js` の `FIREBASE_CONFIG`。`null` のあいだはログイン関係のボタンが出ない
-- Firestore のルール:`saves/{uid}` は本人だけが読み書き、`ranking/{uid}` はだれでも読めて本人だけが書ける
+- Firestore のルール:`saves/{uid}` は本人だけが読み書き、`ranking/{uid}` はだれでも読めて本人だけが書ける(`icon` は40,000文字まで)
+- アイコンは、用意した絵の名前か、画像(128×128のJPEG)の data URL。ほかの人の値は `UIcon.valid` で確かめてから表示する
 
 ## ファイルの構成
 

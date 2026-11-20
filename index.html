@@ -996,6 +996,28 @@ body.phone .pf-rank { margin-left: 0; text-align: left; width: 100%; }
 body.phone .modal { padding: 16px; }
 .rules-h { margin: 6px 0 0; font-size: 13px; color: var(--brand); border-bottom: 1px solid var(--line); padding-bottom: 3px; }
 .rules-h:first-child { margin-top: 0; }
+/* アイコン */
+.uicon { width: 40px; height: 40px; border-radius: 50%; display: block; flex: none; object-fit: cover; background: #dfe3e7; }
+.uicon.sm { width: 26px; height: 26px; }
+.uicon.lg { width: 56px; height: 56px; }
+.uicon.xl { width: 96px; height: 96px; }
+.t-top-me { padding-left: 3px; }
+.pf-icon { position: relative; border: none; background: none; padding: 0; cursor: pointer; flex: none; border-radius: 50%; }
+.pf-icon span { position: absolute; right: -4px; bottom: -2px; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 1px 6px; border: 2px solid #fff; }
+.pf-icon:hover .uicon { box-shadow: 0 0 0 3px rgba(43, 79, 181, .35); }
+.ic-top { display: flex; gap: 14px; align-items: center; }
+.ic-prev { flex: none; }
+.ic-top p { margin: 0 0 8px; }
+.ic-file { position: relative; display: inline-block; overflow: hidden; }
+.ic-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+.ic-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 12px 0 4px; }
+.ic-opt { border: 2px solid transparent; background: #fff; border-radius: 12px; padding: 6px; cursor: pointer; display: grid; place-items: center; }
+.ic-opt .uicon { width: 100%; height: auto; aspect-ratio: 1; max-width: 52px; }
+.ic-opt.sel { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(43, 79, 181, .25); }
+.warn-note { color: var(--warn); margin-top: 8px; }
+.rk-list li { grid-template-columns: 30px 26px minmax(0, 1fr) auto auto; }
+body.phone .ic-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body.phone .uicon.xl { width: 76px; height: 76px; }
 
 </style>
 </head>
@@ -2746,7 +2768,7 @@ const Game = {
     if (!el || el.disabled) return;
     Sfx.ensure();
     const act = el.dataset.act;
-    if (act.startsWith('g:')) { this.globalAct(act.slice(2)); return; }
+    if (act.startsWith('g:')) { this.globalAct(act.slice(2), el.dataset); return; }
     if (this.scene && this.scene.onAct) this.scene.onAct(act, el.dataset, el);
   },
 
@@ -2757,7 +2779,7 @@ const Game = {
     if (this.scene && this.scene.onKey) this.scene.onKey(e);
   },
 
-  globalAct(a) {
+  globalAct(a, ds = {}) {
     if (a === 'manual') { Manual.open ? Manual.hide() : Manual.show(); }
     else if (a === 'manual-close') Manual.hide();
     else if (a === 'pause') this.setPause(!this.paused);
@@ -2768,6 +2790,8 @@ const Game = {
     else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
     else if (a === 'rename') Cloud.askName(false);
     else if (a === 'profile') Cloud.showProfile();
+    else if (a === 'icon') Cloud.showIconPicker();
+    else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'logout') {
       Modal.show({
         title: 'ログアウトしますか？',
@@ -2814,6 +2838,66 @@ const Game = {
   dayScore() { const s = this.day && this.day.score; return s ? s.counter + s.mid + s.gate + s.combo : 0; },
   rank(total = Store.data.total) { let r = DATA.ranks[0]; for (const x of DATA.ranks) if (total >= x.min) r = x; return r; },
   nextRank(total = Store.data.total) { return DATA.ranks.find((x) => x.min > total) || null; },
+};
+
+/* ===== 11-icons.js ===== */
+/* ---------- プレイヤーのアイコン(用意した絵から選ぶ / 画像をアイコンにする) ----------
+   保存する値は「絵の名前(plane など)」か「画像の data URL(128×128 の JPEG)」。
+   ランキングでほかの人のアイコンを表示するときも、この形のものだけを出す */
+const UIcon = {
+  P: {
+    cloud: { name: 'くも', bg: '#4a90d9', g: '<path d="M22 43h21a8 8 0 0 0 1-16 11 11 0 0 0-21-2 8.5 8.5 0 0 0-1 18z" fill="#fff"/>' },
+    plane: { name: 'ひこうき', bg: '#1f3a8a', g: '<path d="M32 11c1.8 0 3 2 3 4.4V27l15 9.5v5l-15-4.6V47l5 3.8V55l-8-2.2-8 2.2v-4.2l5-3.8v-9.9l-15 4.6v-5L29 27V15.4c0-2.4 1.2-4.4 3-4.4z" fill="#fff"/>' },
+    tower: { name: '管制塔', bg: '#23946c', g: '<path d="M31 11h2v8h-2z" fill="#fff"/><path d="M19 20h26l-3.5 10h-19z" fill="#fff"/><path d="M22.5 22h19l-1.6 5H24.1z" fill="#23946c"/><path d="M27 31h10l3.5 21h-17z" fill="#fff"/>' },
+    suitcase: { name: 'スーツケース', bg: '#d9622b', g: '<path d="M27 23v-4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4" fill="none" stroke="#fff" stroke-width="3"/><rect x="17" y="23" width="30" height="26" rx="4" fill="#fff"/><path d="M25 26v20M39 26v20" stroke="#d9622b" stroke-width="2.4"/>' },
+    ticket: { name: 'チケット', bg: '#8b52c9', g: '<path d="M13 22h38v7a3.5 3.5 0 0 0 0 7v7H13v-7a3.5 3.5 0 0 0 0-7z" fill="#fff"/><path d="M38 24v18" stroke="#8b52c9" stroke-width="2" stroke-dasharray="3 3"/><path d="M19 29h13M19 34h9" stroke="#8b52c9" stroke-width="2.4" stroke-linecap="round"/>' },
+    globe: { name: '地球', bg: '#2f8a9e', g: '<circle cx="32" cy="32" r="15" fill="none" stroke="#fff" stroke-width="3"/><ellipse cx="32" cy="32" rx="6.5" ry="15" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M17 32h30M19.5 24h25M19.5 40h25" stroke="#fff" stroke-width="2.2"/>' },
+    cap: { name: '係員の帽子', bg: '#2b3340', g: '<path d="M14 37c0-10 8-17 18-17s18 7 18 17z" fill="#fff"/><path d="M11 38h42v4H11z" fill="#ffb41f"/><circle cx="32" cy="29" r="4" fill="#ffb41f"/>' },
+    headset: { name: 'ヘッドセット', bg: '#c23f78', g: '<path d="M18 37v-5a14 14 0 0 1 28 0v5" fill="none" stroke="#fff" stroke-width="3.2"/><rect x="14" y="34" width="8" height="12" rx="3" fill="#fff"/><rect x="42" y="34" width="8" height="12" rx="3" fill="#fff"/><path d="M46 46c0 4-4 6-9 6" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="35" cy="52" r="2.6" fill="#fff"/>' },
+    star: { name: 'ほし', bg: '#e0a400', g: '<path d="M32 13l5.6 11.6 12.7 1.8-9.2 9 2.2 12.7L32 42.1l-11.3 6 2.2-12.7-9.2-9 12.7-1.8z" fill="#fff"/>' },
+    sun: { name: 'たいよう', bg: '#f08c00', g: '<circle cx="32" cy="32" r="8.5" fill="#fff"/><path d="M32 13v7M32 44v7M13 32h7M44 32h7M18.6 18.6l5 5M40.4 40.4l5 5M18.6 45.4l5-5M40.4 23.6l5-5" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>' },
+    bird: { name: 'ことり', bg: '#c62f2f', g: '<path d="M19 37l-9-6 2 10z" fill="#fff"/><ellipse cx="31" cy="38" rx="14" ry="10" fill="#fff"/><circle cx="43" cy="29" r="7.5" fill="#fff"/><path d="M50 27l7 2.5-7 2.5z" fill="#ffb41f"/><circle cx="45" cy="27.5" r="1.5" fill="#2b3340"/><path d="M22 36c5-11 13-13 19-10-3 8-10 11-19 10z" fill="#f4b9b6"/>' },
+    compass: { name: 'コンパス', bg: '#5d6772', g: '<circle cx="32" cy="32" r="16" fill="none" stroke="#fff" stroke-width="3"/><path d="M32 18l5 14h-10z" fill="#ff8f80"/><path d="M32 46l-5-14h10z" fill="#fff"/><circle cx="32" cy="32" r="2.2" fill="#5d6772"/>' },
+  },
+  DEF: 'cloud',
+  ids() { return Object.keys(this.P); },
+
+  // 表示してよい値か(ほかの人のランキングの値もここで確かめる)
+  valid(v) {
+    if (typeof v !== 'string') return false;
+    if (this.P[v]) return true;
+    return v.length <= 40000 && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(v);
+  },
+
+  html(v, size = '') {
+    const cls = `uicon ${size}`;
+    if (typeof v === 'string' && v.startsWith('data:') && this.valid(v)) return `<img class="${cls}" src="${v}" alt="" draggable="false">`;
+    const p = this.P[v] || this.P[this.DEF];
+    return `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="${p.bg}"/>${p.g}</svg>`;
+  },
+
+  // 画像を、まん中の正方形で切り抜いて 128×128 の JPEG にする(ランキングに出せる小ささ)
+  fromFile(file) {
+    return new Promise((resolve) => {
+      if (!file || !/^image\//.test(file.type || 'image/')) { resolve(null); return; }
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        try {
+          const S = 128, c = document.createElement('canvas'), g = c.getContext('2d');
+          c.width = c.height = S;
+          const w = img.naturalWidth, h = img.naturalHeight, m = Math.min(w, h);
+          g.fillStyle = '#fff'; g.fillRect(0, 0, S, S);
+          g.drawImage(img, (w - m) / 2, (h - m) / 2, m, m, 0, 0, S, S);
+          let q = 0.86, out = c.toDataURL('image/jpeg', q);
+          while (out.length > 30000 && q > 0.45) { q -= 0.12; out = c.toDataURL('image/jpeg', q); }
+          resolve(this.valid(out) ? out : null);
+        } catch (e) { resolve(null); }
+        URL.revokeObjectURL(url);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  },
 };
 
 /* ===== 12-cloud.js ===== */
@@ -2921,6 +3005,7 @@ const Cloud = {
     if (cloud && cloud.data) Store.merge(cloud.data);
     Store.data.owner = u.uid;
     this.user.name = (cloud && cloud.name) || null;
+    this.user.icon = cloud && UIcon.valid(cloud.icon) ? cloud.icon : null;
     this.status = 'in';
     if (!this.user.name) this.askName(true);
     else { Store.save(); Toast.show(`${U.esc(this.user.name)}さん、ログインしました。どの端末でも続きから遊べます`, 'ok', 3600); }
@@ -2965,10 +3050,17 @@ const Cloud = {
       const snap = await F.getDoc(F.doc(db, 'saves', uid));
       if (snap.exists() && snap.data().data && Store.merge(snap.data().data)) Store.saveLocal();
       if (!this.user || this.user.uid !== uid) return;
-      await F.setDoc(F.doc(db, 'saves', uid), { data: JSON.parse(JSON.stringify(Store.cloudData())), name, updatedAt: F.serverTimestamp() });
-      await F.setDoc(F.doc(db, 'ranking', uid), {
-        name, total: Math.max(0, Math.round(d.total || 0)), best: Math.max(0, Math.round((d.bestDay && d.bestDay.score) || 0)), day: Math.round(d.day || 1), updatedAt: F.serverTimestamp(),
-      });
+      const icon = UIcon.valid(this.user.icon) ? this.user.icon : null;
+      await F.setDoc(F.doc(db, 'saves', uid), { data: JSON.parse(JSON.stringify(Store.cloudData())), name, ...(icon ? { icon } : {}), updatedAt: F.serverTimestamp() });
+      const row = { name, total: Math.max(0, Math.round(d.total || 0)), best: Math.max(0, Math.round((d.bestDay && d.bestDay.score) || 0)), day: Math.round(d.day || 1), updatedAt: F.serverTimestamp() };
+      try { await F.setDoc(F.doc(db, 'ranking', uid), icon ? { ...row, icon } : row); this.oldRules = false; }
+      catch (e) {
+        // Firestore のルールが古い(icon を受け付けない)ときは、アイコンなしでランキングだけ更新する
+        if (!icon || (e && e.code) !== 'permission-denied') throw e;
+        await F.setDoc(F.doc(db, 'ranking', uid), row);
+        if (!this.oldRules) Toast.show('アイコンをランキングに出すには、Firestore のルールの更新が必要です', 'info', 5000);
+        this.oldRules = true;
+      }
       if (this.user && this.user.uid === uid) this.status = 'saved';
     } catch (e) {
       console.warn(e); this.status = 'error';
@@ -2992,7 +3084,7 @@ const Cloud = {
     Modal.show({
       title: 'プロフィール',
       wide: true,
-      body: `<div class="pf-head"><span class="acct-ic big" aria-hidden="true">☁</span>
+      body: `<div class="pf-head"><button class="pf-icon" data-act="g:icon" aria-label="アイコンを変える">${UIcon.html(this.user.icon, 'lg')}<span>変える</span></button>
           <div class="pf-who"><b>${U.esc(this.user.name)}</b>さん<small class="${this.status === 'error' ? 'bad' : 'ok'}">${status}</small></div>
           <div class="pf-rank"><small>ランク</small><b>${r.name}</b><span>${nx ? `次の「${nx.name}」まで あと${U.fmt(nx.min - s.total)}点` : '最高ランクです'}</span></div></div>
         <h3 class="pf-h">これまでの統計</h3>
@@ -3013,9 +3105,56 @@ const Cloud = {
         </div>
         ${jobs.length ? `<h3 class="pf-h">仕事ごと</h3><table class="pf-jobs"><tr><th>仕事</th><th>担当した日</th><th>対応</th><th>正解率</th></tr>
           ${jobs.map((j) => { const x = st.jobs[j]; return `<tr><td>${DATA.jobs[j].name}</td><td>${x.days}日</td><td>${x.n}件</td><td>${pct(x.ok, x.n)}</td></tr>`; }).join('')}</table>` : ''}
-        ${bests.length ? `<h3 class="pf-h">日ごとの最高点</h3><div class="pf-bars" role="img" aria-label="日ごとの最高点のグラフ">${bests.map((b) => `<div class="pf-bar" title="${b.n}日目 ${U.fmt(b.score)}点"><i style="height:${Math.max(3, (Math.max(0, b.score) / max) * 100)}%"></i><span>${b.n}</span></div>`).join('')}</div>` : ''}`,
-      actions: [{ label: '名前を変える', cls: 'ghost', run: () => this.askName(false) }, { label: 'ログアウト', cls: 'ghost', run: () => Game.globalAct('logout') }, { label: '閉じる', cls: 'primary' }],
+        ${bests.length ? `<h3 class="pf-h">日ごとの最高点</h3><div class="pf-bars" role="img" aria-label="日ごとの最高点のグラフ">${bests.map((b) => `<div class="pf-bar" title="${b.n}日目 ${U.fmt(b.score)}点"><i style="height:${Math.max(3, (Math.max(0, b.score) / max) * 100)}%"></i><span>${b.n}</span></div>`).join('')}</div>` : ''}
+        ${this.oldRules ? '<p class="small warn-note">アイコンをランキングに出すには、Firestore のルールの更新が必要です。</p>' : ''}`,
+      actions: [{ label: 'アイコンを変える', cls: 'ghost', run: () => this.showIconPicker() }, { label: '名前を変える', cls: 'ghost', run: () => this.askName(false) }, { label: 'ログアウト', cls: 'ghost', run: () => Game.globalAct('logout') }, { label: '閉じる', cls: 'primary' }],
     });
+  },
+
+  /* ===== アイコンを変える ===== */
+  showIconPicker() {
+    if (!this.user) return;
+    this._pend = UIcon.valid(this.user.icon) ? this.user.icon : UIcon.DEF;
+    const custom = this._pend.startsWith('data:');
+    Modal.show({
+      title: 'アイコンを変える',
+      body: `<div class="ic-top"><div class="ic-prev" id="icprev">${UIcon.html(this._pend, 'xl')}</div>
+          <div><p class="small">好きな絵を選ぶか、写真などの画像を選んでください。画像は、まん中の正方形が使われます。</p>
+          <label class="btn ic-file"><input type="file" accept="image/*" id="icfile">画像から選ぶ</label></div></div>
+        <div class="ic-grid" role="group" aria-label="アイコンの絵">${UIcon.ids().map((id) => `<button class="ic-opt ${!custom && id === this._pend ? 'sel' : ''}" data-act="g:icon-pick" data-id="${id}" aria-pressed="${!custom && id === this._pend}" title="${UIcon.P[id].name}">${UIcon.html(id)}</button>`).join('')}</div>
+        <p class="small mute">アイコンはランキングで、ほかの人にも見えます。人に見せてよい画像を選んでください。</p>`,
+      actions: [{ label: 'やめる', cls: 'ghost', run: () => this.showProfile() }, { label: 'このアイコンにする', cls: 'primary', run: () => this.setIcon(this._pend) }],
+    });
+    const f = document.getElementById('icfile');
+    if (f) f.addEventListener('change', () => this.pickFile(f.files && f.files[0]));
+  },
+
+  pickIcon(id) {
+    if (!UIcon.P[id]) return;
+    this._pend = id; Sfx.pop();
+    this.showPend();
+  },
+
+  async pickFile(file) {
+    if (!file) return;
+    const url = await UIcon.fromFile(file);
+    if (!url) { Toast.show('この画像は使えませんでした。ほかの画像(JPEG・PNG)を選んでください', 'bad', 4200); return; }
+    this._pend = url;
+    this.showPend();
+  },
+
+  showPend() {
+    const p = document.getElementById('icprev'); if (p) p.innerHTML = UIcon.html(this._pend, 'xl');
+    document.querySelectorAll('.ic-opt').forEach((b) => { const on = b.dataset.id === this._pend; b.classList.toggle('sel', on); b.setAttribute('aria-pressed', String(on)); });
+  },
+
+  setIcon(v) {
+    if (!this.user || !UIcon.valid(v)) return;
+    this.user.icon = v;
+    Store.save();
+    this.refresh(true);
+    Toast.show('アイコンを変えました', 'ok', 2400);
+    this.showProfile();
   },
 
   /* ===== ランキング ===== */
@@ -3040,7 +3179,7 @@ const Cloud = {
       const rows = []; snap.forEach((doc) => rows.push({ uid: doc.id, ...doc.data() }));
       if (!el()) return;
       el().innerHTML = rows.length ? rows.map((r, i) => `<li class="${this.user && r.uid === this.user.uid ? 'me' : ''}">
-          <span class="rk-no">${i + 1}</span><span class="rk-name">${U.esc(r.name || '名無し')}${this.user && r.uid === this.user.uid ? ' <em>あなた</em>' : ''}</span>
+          <span class="rk-no">${i + 1}</span>${UIcon.html(this.user && r.uid === this.user.uid ? this.user.icon : UIcon.valid(r.icon) ? r.icon : UIcon.DEF, 'sm')}<span class="rk-name">${U.esc(r.name || '名無し')}${this.user && r.uid === this.user.uid ? ' <em>あなた</em>' : ''}</span>
           <span class="rk-day">${r.day || 1}日目</span><b class="rk-val">${U.fmt(r[kind] || 0)}<small>点</small></b></li>`).join('')
         : '<li class="rk-msg">まだだれもいません。1日目をクリアすると、ここにのります。</li>';
     } catch (e) {
@@ -3056,7 +3195,7 @@ const Cloud = {
   topHTML() {
     if (!this.enabled()) return '';
     return `<div class="t-top" id="ttop"><button class="btn small t-top-btn" data-act="g:ranking"><span aria-hidden="true">🏆</span>ランキング</button>
-      ${this.user ? `<button class="t-top-me" data-act="g:profile" aria-label="プロフィールと統計を見る"><span class="acct-ic sm" aria-hidden="true">☁</span><span class="t-top-nm">${U.esc(this.user.name || '…')}</span><span class="t-top-st ${this.status === 'error' ? 'bad' : ''}" aria-hidden="true">${this.status === 'saving' ? '…' : this.status === 'error' ? '!' : ''}</span></button>`
+      ${this.user ? `<button class="t-top-me" data-act="g:profile" aria-label="プロフィールと統計を見る">${UIcon.html(this.user.icon, 'sm')}<span class="t-top-nm">${U.esc(this.user.name || '…')}</span><span class="t-top-st ${this.status === 'error' ? 'bad' : ''}" aria-hidden="true">${this.status === 'saving' ? '…' : this.status === 'error' ? '!' : ''}</span></button>`
         : `<button class="btn small t-top-btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>ログイン</button>`}</div>`;
   },
 

@@ -986,3 +986,25 @@ body.phone .pf-rank { margin-left: 0; text-align: left; width: 100%; }
 body.phone .modal { padding: 16px; }
 .rules-h { margin: 6px 0 0; font-size: 13px; color: var(--brand); border-bottom: 1px solid var(--line); padding-bottom: 3px; }
 .rules-h:first-child { margin-top: 0; }
+/* アイコン */
+.uicon { width: 40px; height: 40px; border-radius: 50%; display: block; flex: none; object-fit: cover; background: #dfe3e7; }
+.uicon.sm { width: 26px; height: 26px; }
+.uicon.lg { width: 56px; height: 56px; }
+.uicon.xl { width: 96px; height: 96px; }
+.t-top-me { padding-left: 3px; }
+.pf-icon { position: relative; border: none; background: none; padding: 0; cursor: pointer; flex: none; border-radius: 50%; }
+.pf-icon span { position: absolute; right: -4px; bottom: -2px; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 1px 6px; border: 2px solid #fff; }
+.pf-icon:hover .uicon { box-shadow: 0 0 0 3px rgba(43, 79, 181, .35); }
+.ic-top { display: flex; gap: 14px; align-items: center; }
+.ic-prev { flex: none; }
+.ic-top p { margin: 0 0 8px; }
+.ic-file { position: relative; display: inline-block; overflow: hidden; }
+.ic-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+.ic-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 12px 0 4px; }
+.ic-opt { border: 2px solid transparent; background: #fff; border-radius: 12px; padding: 6px; cursor: pointer; display: grid; place-items: center; }
+.ic-opt .uicon { width: 100%; height: auto; aspect-ratio: 1; max-width: 52px; }
+.ic-opt.sel { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(43, 79, 181, .25); }
+.warn-note { color: var(--warn); margin-top: 8px; }
+.rk-list li { grid-template-columns: 30px 26px minmax(0, 1fr) auto auto; }
+body.phone .ic-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body.phone .uicon.xl { width: 76px; height: 76px; }
