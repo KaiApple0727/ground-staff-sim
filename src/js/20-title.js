@@ -31,11 +31,13 @@ Scenes.title = {
           <button class="btn primary big" data-act="start">${first ? '勤務を始める' : `${s.day}日目の勤務へ`}</button>
           <button class="btn" data-act="g:manual">業務マニュアル</button>
         </div>
-        ${s.day > 1 ? `<div class="t-days" role="group" aria-label="これまでの日をもう一度遊ぶ"><small>これまでの日をもう一度(★はその日の最高評価)</small>
-          <div class="t-days-row" id="tdays">${Array.from({ length: s.day - 1 }, (_, i) => i + 1).map((n) => {
-            const b = s.best[n], ev = Progress.eventFor(n);
-            return `<button class="btn small dayb" data-act="pick" data-n="${n}" title="${n}日目${ev ? ' ' + DATA.events[ev].name : ''}">${n}${ev ? '<i>特</i>' : ''}<span class="st">${b ? '★'.repeat(b.stars) : '—'}</span></button>`;
-          }).join('')}</div></div>` : ''}
+        <div class="t-days" role="group" aria-label="勤務日をえらぶ"><small>${s.day > 1 ? 'クリアした日は、もう一度遊べます(★はその日の最高評価)' : '勤務日(クリアすると次の日が遊べます)'}</small>
+          <div class="t-days-row" id="tdays">${Array.from({ length: s.day + 3 }, (_, i) => i + 1).map((n) => {
+            const b = s.best[n], ev = Progress.eventFor(n), tag = ev ? '<i>特</i>' : '', name = `${n}日目${ev ? ' ' + DATA.events[ev].name : ''}`;
+            if (n < s.day) return `<button class="btn small dayb" data-act="pick" data-n="${n}" title="${name}">${n}${tag}<span class="st">${b ? '★'.repeat(b.stars) : '—'}</span></button>`;
+            if (n === s.day) return `<button class="btn small dayb cur" data-act="start" title="${name}(次の勤務)">${n}${tag}<span class="st now">つぎ</span></button>`;
+            return `<button class="btn small dayb locked" data-act="locked" data-n="${n}" aria-disabled="true" title="${name}(まだ遊べません)">${n}${tag}<span class="st">${this.lock()}</span></button>`;
+          }).join('')}</div></div>
         <div class="t-opts">
           <button class="btn ghost small" data-act="speech" aria-pressed="${s.settings.speech}">アナウンス読み上げ: ${s.settings.speech ? 'ON' : 'OFF'}</button>
           <button class="btn ghost small" data-act="g:changelog">アップデート履歴${!first && s.settings.seenVer !== CONFIG.version ? '<span class="new-dot">NEW</span>' : ''}</button>
@@ -45,12 +47,16 @@ Scenes.title = {
       </section>
     </div>`;
     Flap.run(document.getElementById('tboard'));
-    const row = document.getElementById('tdays'); if (row) row.scrollLeft = row.scrollWidth;   // 最近の日が見えるように
+    // 次の勤務日が見えるように(その先のまだ遊べない日も少し見える位置)
+    const row = document.getElementById('tdays'), cur = row && row.querySelector('.dayb.cur');
+    if (row && cur) row.scrollLeft = Math.max(0, cur.offsetLeft + cur.offsetWidth * 4 - row.clientWidth);
   },
+  lock() { return '<svg class="lock" viewBox="0 0 16 18" aria-hidden="true"><path d="M4.5 8V5.5a3.5 3.5 0 0 1 7 0V8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="2" y="8" width="12" height="9" rx="2" fill="currentColor"/><circle cx="8" cy="12.5" r="1.5" fill="#c9ced3"/></svg>'; },
   verText() { return `v${CONFIG.version} · ${Cloud.user ? '進み具合はクラウドにも保存されます' : '進み具合はこのブラウザに保存されます'}`; },
   onAct(a, ds) {
     if (a === 'start') Game.startDay(Store.data.day);
     else if (a === 'pick') { const n = +ds.n; if (n >= 1 && n < Store.data.day) Game.startDay(n); }   // クリアした日だけ
+    else if (a === 'locked') { Sfx.buzz(); Toast.show(`${ds.n}日目は、${Store.data.day}日目${+ds.n - Store.data.day > 1 ? `から${+ds.n - 1}日目まで` : ''}をクリアすると遊べます`, 'info', 3000); }
     else if (a === 'speech') { const st = Store.data.settings; st.speech = !st.speech; Store.save(); this.enter(); }
     else if (a === 'reset') {
       Modal.show({ soft: true,

@@ -141,6 +141,12 @@ h1, h2, h3 { text-wrap: balance; }
 .dayb.cur { border-color: var(--brand); color: var(--brand); }
 .dayb i { position: absolute; top: -7px; right: -5px; font-style: normal; font-family: var(--f-body); font-size: 9.5px; font-weight: 700; background: var(--amber); color: var(--ink); border-radius: 3px; padding: 0 3px; }
 .dayb .st { display: block; font-size: 10.5px; color: var(--warn); letter-spacing: -1px; line-height: 1.1; }
+.dayb .st.now { font-family: var(--f-body); font-size: 9.5px; font-weight: 700; letter-spacing: 0; color: var(--brand); }
+.dayb.cur { background: #eef2fb; box-shadow: inset 0 0 0 1px var(--brand); }
+/* まだ遊べない日 */
+.dayb.locked { background: #c9ced3; border-color: #b4bac0; color: #5d6772; cursor: not-allowed; }
+.dayb.locked:hover { border-color: #b4bac0; }
+.dayb .lock { width: 11px; height: 12px; display: inline-block; vertical-align: -1px; }
 
 /* ---------- ブリーフィング ---------- */
 .brief { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; max-width: 1320px; margin: 0 auto; }
@@ -1054,3 +1060,4 @@ body.phone .uicon.xl { width: 76px; height: 76px; }
 .cl-v { font-family: var(--f-mono); font-weight: 700; color: var(--brand); }
 .cl-item summary small { color: var(--mute); font-size: 11.5px; }
 .cl-item ul { margin: 6px 0 2px; padding-left: 22px; font-size: 13px; display: grid; gap: 3px; }
+.dayb.locked .st { color: #5d6772; }
