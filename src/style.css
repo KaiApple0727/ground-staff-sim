@@ -1008,3 +1008,16 @@ body.phone .modal { padding: 16px; }
 .rk-list li { grid-template-columns: 30px 26px minmax(0, 1fr) auto auto; }
 body.phone .ic-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 body.phone .uicon.xl { width: 76px; height: 76px; }
+/* 画像の切り取り */
+.ic-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.crop { display: grid; justify-items: center; gap: 10px; }
+.crop p { margin: 0; text-align: center; }
+.crop-view { position: relative; overflow: hidden; border-radius: 12px; background: #1b1f24; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.crop-view.drag { cursor: grabbing; }
+.crop-view:focus-visible { outline: 3px solid rgba(43, 79, 181, .5); outline-offset: 2px; }
+.crop-view img { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+/* 丸の外を暗くして、アイコンになる部分を見せる */
+.crop-view::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle closest-side, transparent 99%, rgba(10, 14, 18, .55) 100%); }
+.crop-view::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .9); pointer-events: none; z-index: 1; }
+.crop-zoom { display: flex; align-items: center; gap: 10px; width: 260px; font-weight: 700; color: var(--mute); }
+.crop-zoom input { flex: 1; accent-color: var(--brand); }

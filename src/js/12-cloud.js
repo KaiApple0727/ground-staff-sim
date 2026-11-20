@@ -209,15 +209,15 @@ const Cloud = {
   },
 
   /* ===== アイコンを変える ===== */
-  showIconPicker() {
+  showIconPicker(keep) {
     if (!this.user) return;
-    this._pend = UIcon.valid(this.user.icon) ? this.user.icon : UIcon.DEF;
+    if (!keep || !UIcon.valid(this._pend)) this._pend = UIcon.valid(this.user.icon) ? this.user.icon : UIcon.DEF;
     const custom = this._pend.startsWith('data:');
     Modal.show({
       title: 'アイコンを変える',
       body: `<div class="ic-top"><div class="ic-prev" id="icprev">${UIcon.html(this._pend, 'xl')}</div>
           <div><p class="small">好きな絵を選ぶか、写真などの画像を選んでください。画像は、まん中の正方形が使われます。</p>
-          <label class="btn ic-file"><input type="file" accept="image/*" id="icfile">画像から選ぶ</label></div></div>
+          <div class="ic-btns"><label class="btn ic-file"><input type="file" accept="image/*" id="icfile">画像から選ぶ</label>${custom && Cropper.img ? '<button class="btn" data-act="g:icon-crop">範囲を変える</button>' : ''}</div></div></div>
         <div class="ic-grid" role="group" aria-label="アイコンの絵">${UIcon.ids().map((id) => `<button class="ic-opt ${!custom && id === this._pend ? 'sel' : ''}" data-act="g:icon-pick" data-id="${id}" aria-pressed="${!custom && id === this._pend}" title="${UIcon.P[id].name}">${UIcon.html(id)}</button>`).join('')}</div>
         <p class="small mute">アイコンはランキングで、ほかの人にも見えます。人に見せてよい画像を選んでください。</p>`,
       actions: [{ label: 'やめる', cls: 'ghost', run: () => this.showProfile() }, { label: 'このアイコンにする', cls: 'primary', run: () => this.setIcon(this._pend) }],
@@ -232,12 +232,28 @@ const Cloud = {
     this.showPend();
   },
 
+  // 画像を選んだら、どこを使うかを決める画面へ
   async pickFile(file) {
     if (!file) return;
-    const url = await UIcon.fromFile(file);
-    if (!url) { Toast.show('この画像は使えませんでした。ほかの画像(JPEG・PNG)を選んでください', 'bad', 4200); return; }
-    this._pend = url;
-    this.showPend();
+    if (!(await Cropper.load(file))) { Toast.show('この画像は使えませんでした。ほかの画像(JPEG・PNG)を選んでください', 'bad', 4200); return; }
+    this.showCropper();
+  },
+
+  showCropper() {
+    if (!Cropper.img) return;
+    Modal.show({
+      title: 'アイコンにする範囲を決める',
+      body: Cropper.html(),
+      actions: [{ label: 'もどる', cls: 'ghost', run: () => this.showIconPicker(true) }, {
+        label: 'この範囲にする', cls: 'primary',
+        run: () => {
+          const url = Cropper.result();
+          if (url) this._pend = url; else Toast.show('うまく切り取れませんでした。ほかの画像を試してください', 'bad', 4000);
+          this.showIconPicker(true);
+        },
+      }],
+    });
+    Cropper.bind();
   },
 
   showPend() {

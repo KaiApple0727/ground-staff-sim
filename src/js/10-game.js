@@ -64,6 +64,7 @@ const Game = {
     else if (a === 'profile') Cloud.showProfile();
     else if (a === 'icon') Cloud.showIconPicker();
     else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
+    else if (a === 'icon-crop') Cloud.showCropper();
     else if (a === 'logout') {
       Modal.show({
         title: 'ログアウトしますか?',

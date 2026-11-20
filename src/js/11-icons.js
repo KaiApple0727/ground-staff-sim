@@ -56,3 +56,103 @@ const UIcon = {
     });
   },
 };
+
+/* 画像のどこをアイコンにするか決める(ドラッグで動かす・スライダー/2本指/ホイールで拡大) */
+const Cropper = {
+  V: 260, OUT: 128, img: null, url: null,
+
+  load(file) {
+    return new Promise((resolve) => {
+      if (!file || !/^image\//.test(file.type || 'image/')) { resolve(false); return; }
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        if (this.url) URL.revokeObjectURL(this.url);
+        Object.assign(this, { img, url, w: img.naturalWidth, h: img.naturalHeight });
+        this.base = this.V / Math.min(this.w, this.h);   // 短い辺がちょうど枠に入る大きさ
+        this.z = 1; this.x = (this.V - this.w * this.base) / 2; this.y = (this.V - this.h * this.base) / 2;
+        resolve(this.w > 0 && this.h > 0);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
+      img.src = url;
+    });
+  },
+
+  html() {
+    return `<div class="crop">
+      <div class="crop-view" id="cropview" style="width:${this.V}px;height:${this.V}px" tabindex="0" aria-label="アイコンにする範囲。ドラッグや矢印キーで動かせます"><img id="cropimg" src="${this.url}" alt="" draggable="false"></div>
+      <label class="crop-zoom"><span aria-hidden="true">−</span><input type="range" id="cropzoom" min="100" max="400" step="1" value="${Math.round(this.z * 100)}" aria-label="拡大"><span aria-hidden="true">＋</span></label>
+      <p class="small mute">画像をドラッグして動かし、スライダーや2本指で大きさを変えます。<b>丸の中</b>がアイコンになります。</p></div>`;
+  },
+
+  bind() {
+    const v = document.getElementById('cropview'), zr = document.getElementById('cropzoom'); if (!v) return;
+    const pts = new Map(); let last = null;
+    const gest = () => {
+      const a = [...pts.values()]; if (!a.length) return null;
+      const cx = a.reduce((s, p) => s + p.x, 0) / a.length, cy = a.reduce((s, p) => s + p.y, 0) / a.length;
+      return { n: a.length, cx, cy, d: a.length >= 2 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0 };
+    };
+    v.addEventListener('pointerdown', (e) => { e.preventDefault(); try { v.setPointerCapture(e.pointerId); } catch (er) { /* */ } pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); last = gest(); v.classList.add('drag'); });
+    v.addEventListener('pointermove', (e) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const g = gest();
+      if (last && g && g.n === last.n) {
+        this.x += g.cx - last.cx; this.y += g.cy - last.cy;
+        if (g.n >= 2 && last.d > 0) { const r = v.getBoundingClientRect(); this.zoomAt(this.z * (g.d / last.d), g.cx - r.left, g.cy - r.top); }
+        else { this.clamp(); this.render(); }
+      }
+      last = g;
+    });
+    const up = (e) => { pts.delete(e.pointerId); last = gest(); if (!pts.size) v.classList.remove('drag'); };
+    v.addEventListener('pointerup', up); v.addEventListener('pointercancel', up);
+    v.addEventListener('wheel', (e) => { e.preventDefault(); const r = v.getBoundingClientRect(); this.zoomAt(this.z * Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+    v.addEventListener('keydown', (e) => {
+      const k = e.key, st = 10;
+      if (k === 'ArrowLeft') this.x += st; else if (k === 'ArrowRight') this.x -= st; else if (k === 'ArrowUp') this.y += st; else if (k === 'ArrowDown') this.y -= st;
+      else if (k === '+' || k === '=') { this.zoomAt(this.z * 1.1, this.V / 2, this.V / 2); e.preventDefault(); return; }
+      else if (k === '-') { this.zoomAt(this.z / 1.1, this.V / 2, this.V / 2); e.preventDefault(); return; }
+      else return;
+      e.preventDefault(); this.clamp(); this.render();
+    });
+    zr.addEventListener('input', () => this.zoomAt(zr.value / 100, this.V / 2, this.V / 2));
+    this.clamp(); this.render();
+  },
+
+  // (cx, cy) の点を動かさずに拡大・縮小する
+  zoomAt(z, cx, cy) {
+    z = U.clamp(z, 1, 4);
+    const k = z / this.z;
+    this.x = cx - (cx - this.x) * k; this.y = cy - (cy - this.y) * k; this.z = z;
+    this.clamp(); this.render();
+  },
+
+  // 画像が枠からはみ出さない(すき間ができない)ようにする
+  clamp() {
+    const s = this.base * this.z;
+    this.x = U.clamp(this.x, this.V - this.w * s, 0);
+    this.y = U.clamp(this.y, this.V - this.h * s, 0);
+  },
+
+  render() {
+    const im = document.getElementById('cropimg'), s = this.base * this.z; if (!im) return;
+    im.style.width = `${this.w * s}px`; im.style.height = `${this.h * s}px`;
+    im.style.transform = `translate(${this.x}px, ${this.y}px)`;
+    const zr = document.getElementById('cropzoom'); if (zr && document.activeElement !== zr) zr.value = Math.round(this.z * 100);
+  },
+
+  // 決めた範囲を 128×128 の JPEG にする
+  result() {
+    if (!this.img) return null;
+    try {
+      const S = this.OUT, c = document.createElement('canvas'), g = c.getContext('2d'), s = this.base * this.z;
+      c.width = c.height = S;
+      g.fillStyle = '#fff'; g.fillRect(0, 0, S, S);
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(this.img, -this.x / s, -this.y / s, this.V / s, this.V / s, 0, 0, S, S);
+      let q = 0.86, out = c.toDataURL('image/jpeg', q);
+      while (out.length > 30000 && q > 0.45) { q -= 0.12; out = c.toDataURL('image/jpeg', q); }
+      return UIcon.valid(out) ? out : null;
+    } catch (e) { return null; }
+  },
+};
