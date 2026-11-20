@@ -33,6 +33,13 @@ const Cloud = {
     if (!this.enabled()) return;
     this.status = 'loading'; this.refresh();
     try { await this.load(); } catch (e) { console.warn(e); this.status = 'error'; this.refresh(); return; }
+    this.watch();
+  },
+
+  // ログイン状態の変化を受け取る(1回だけ登録)
+  watch() {
+    if (this._watching || !this.fb) return;
+    this._watching = true;
     const { auth, A } = this.fb;
     A.onAuthStateChanged(auth, (u) => { this.onUser(u).catch((e) => { console.warn(e); this.status = 'error'; this.refresh(); }); });
   },
@@ -52,6 +59,7 @@ const Cloud = {
     }
     try {
       const { auth, A } = await this.load();
+      this.watch();
       const p = new A.GoogleAuthProvider();
       p.setCustomParameters({ prompt: 'select_account' });
       await A.signInWithPopup(auth, p);   // 結果は onAuthStateChanged で受け取る
@@ -181,18 +189,31 @@ const Cloud = {
   /* ===== 表示 ===== */
   name() { return this.user && this.user.name ? this.user.name : ''; },
 
-  // タイトル画面の「アカウント」欄
+  // タイトル画面の右上(ランキング・ログイン)
+  topHTML() {
+    if (!this.enabled()) return '';
+    return `<div class="t-top" id="ttop"><button class="btn small t-top-btn" data-act="g:ranking"><span aria-hidden="true">🏆</span>ランキング</button>
+      ${this.user ? `<span class="t-top-me" title="ログイン中"><span class="acct-ic sm" aria-hidden="true">☁</span>${U.esc(this.user.name || '…')}</span>`
+        : `<button class="btn small t-top-btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>ログイン</button>`}</div>`;
+  },
+
+  // タイトル画面の「アカウント」欄。ログイン前は案内(×で隠せる)、ログイン中はプロフィール
   boxHTML() {
     if (!this.enabled()) return '';
     const st = { loading: 'ログインを確認中…', saving: '保存中…', saved: 'クラウドに保存済み', in: 'クラウドに保存済み', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || '';
-    if (this.status === 'error' && !this.fb) return '<div class="acct" id="acct"><p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p><div class="acct-btns"><button class="btn small" data-act="g:cloud-retry">もう一度つなぐ</button></div></div>';
+    const hide = !this.user && Store.data.settings.hideAcct;
+    if (hide) return '<div id="acct" hidden></div>';
+    const x = '<button class="acct-x" data-act="g:acct-hide" aria-label="この案内を閉じる" title="閉じる(右上のボタンからいつでもログインできます)">×</button>';
+    if (this.status === 'error' && !this.fb) return `<div class="acct" id="acct">${x}<p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p><div class="acct-btns"><button class="btn small" data-act="g:cloud-retry">もう一度つなぐ</button></div></div>`;
     if (this.user) {
-      return `<div class="acct in" id="acct"><div class="acct-who"><span class="acct-ic" aria-hidden="true">☁</span><div><b>${U.esc(this.user.name || '…')}</b>さん<small class="${this.status === 'error' ? 'bad' : ''}">${st}</small></div></div>
-        <div class="acct-btns"><button class="btn small" data-act="g:ranking">ランキング</button><button class="btn small ghost" data-act="g:rename">名前を変える</button><button class="btn small ghost" data-act="g:logout">ログアウト</button></div></div>`;
+      const s = Store.data;
+      return `<div class="acct in" id="acct"><div class="acct-who"><span class="acct-ic" aria-hidden="true">☁</span><div><small class="acct-lbl">プロフィール</small><b>${U.esc(this.user.name || '…')}</b>さん<small class="${this.status === 'error' ? 'bad' : 'ok'}">${st}</small></div></div>
+        <dl class="acct-stats"><div><dt>ランク</dt><dd>${Game.rank(s.total).name}</dd></div><div><dt>累計</dt><dd>${U.fmt(s.total)}点</dd></div><div><dt>1日の最高</dt><dd>${s.bestDay ? U.fmt(s.bestDay.score) + '点' : '—'}</dd></div></dl>
+        <div class="acct-btns"><button class="btn small ghost" data-act="g:rename">名前を変える</button><button class="btn small ghost" data-act="g:logout">ログアウト</button></div></div>`;
     }
-    if (this.status === 'loading') return `<div class="acct" id="acct"><p class="small mute">${st}</p></div>`;
-    return `<div class="acct" id="acct"><p>ログインすると、<b>どの端末でも続きから</b>遊べて、<b>ランキング</b>にも参加できます。</p>
-      <div class="acct-btns"><button class="btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>Googleでログイン</button><button class="btn small" data-act="g:ranking">ランキングを見る</button></div></div>`;
+    if (this.status === 'loading') return `<div class="acct" id="acct">${x}<p class="small mute">${st}</p></div>`;
+    return `<div class="acct" id="acct">${x}<p>ログインすると、<b>どの端末でも続きから</b>遊べて、<b>ランキング</b>にも参加できます。</p>
+      <div class="acct-btns"><button class="btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>Googleでログイン</button></div></div>`;
   },
 
   // 状態が変わったら、タイトル画面なら描き直す(記録が変わったときは画面ごと)
@@ -201,6 +222,8 @@ const Cloud = {
     if (all && !Modal.open) { Scenes.title.enter(); return; }
     const box = document.getElementById('acct');
     if (box) box.outerHTML = this.boxHTML();
+    const top = document.getElementById('ttop');
+    if (top) top.outerHTML = this.topHTML();
     const ver = document.getElementById('tver'); if (ver) ver.textContent = Scenes.title.verText();
   },
 };

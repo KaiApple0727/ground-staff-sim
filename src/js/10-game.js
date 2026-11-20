@@ -57,6 +57,7 @@ const Game = {
     else if (a === 'pause') this.setPause(!this.paused);
     else if (a === 'login') Cloud.login();
     else if (a === 'cloud-retry') Cloud.init();
+    else if (a === 'acct-hide') { Store.data.settings.hideAcct = true; Store.save(); Cloud.refresh(); Toast.show('案内を閉じました。ログインは右上のボタンからできます', 'info', 3200); }
     else if (a === 'ranking') Cloud.showRanking();
     else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
     else if (a === 'rename') Cloud.askName(false);

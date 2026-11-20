@@ -624,7 +624,7 @@ body.phone { font-size: 14px; }
 body.phone .kbd, body.phone .g-keys { display: none; }
 /* 上部バー:ボタンはアイコンだけ */
 body.phone .topbar { height: 44px; gap: 8px; padding: 0 8px; }
-body.phone .brand > div, body.phone .st-rank { display: none; }
+body.phone .topbar .brand > div, body.phone .st-rank { display: none; }
 body.phone .logo { width: 24px; height: 24px; }
 body.phone .tb-stats { flex: 1; margin-left: 2px; gap: 12px; justify-content: flex-start; }
 body.phone .stat { flex-direction: column; align-items: flex-start; gap: 0; }
@@ -930,3 +930,24 @@ body.phone .scale-area:has(.carry-card) .belt { width: 110px; }
 .rk-day { font-size: 11.5px; color: var(--mute); }
 .rk-val { font-family: var(--f-mono); font-size: 16px; text-align: right; }
 .rk-val small { font-size: 11px; margin-left: 2px; }
+/* タイトルの右上(ランキング・ログイン)と、×で閉じられる案内・プロフィール */
+.t-panel { position: relative; }
+.t-panel.has-top { padding-top: 58px; }
+.t-panel > .t-top:first-child { margin-top: 0; }
+.t-panel.has-top > .t-top + * { margin-top: auto; }
+.t-top { position: absolute; top: 14px; right: 18px; display: flex; gap: 6px; align-items: center; }
+.t-top-btn { display: inline-flex; align-items: center; gap: 6px; }
+.t-top-me { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 4px; font-weight: 700; font-size: 13px; max-width: 13em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.acct-ic.sm { width: 24px; height: 24px; font-size: 12px; flex: none; }
+.acct { position: relative; }
+.acct:not(.in) { padding-right: 34px; }
+.acct-x { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border: none; background: transparent; border-radius: 50%; font-size: 20px; line-height: 1; color: var(--mute); cursor: pointer; }
+.acct-x:hover { background: #eef0f2; color: var(--ink); }
+.acct-lbl { display: block; font-size: 10px; color: var(--mute) !important; letter-spacing: .05em; }
+.acct-who small.ok { color: var(--ok); }
+.acct-stats { display: flex; gap: 14px; margin: 0; font-size: 12px; }
+.acct-stats dt { color: var(--mute); font-size: 10.5px; }
+.acct-stats dd { margin: 0; font-weight: 700; }
+body.phone .t-panel.has-top { padding-top: 54px; }
+body.phone .t-panel > *, body.phone .t-panel.has-top > .t-top + * { margin-top: 0; margin-bottom: 0; }
+body.phone .t-top { top: 10px; right: 12px; }

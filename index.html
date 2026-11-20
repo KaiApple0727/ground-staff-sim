@@ -634,7 +634,7 @@ body.phone { font-size: 14px; }
 body.phone .kbd, body.phone .g-keys { display: none; }
 /* 上部バー:ボタンはアイコンだけ */
 body.phone .topbar { height: 44px; gap: 8px; padding: 0 8px; }
-body.phone .brand > div, body.phone .st-rank { display: none; }
+body.phone .topbar .brand > div, body.phone .st-rank { display: none; }
 body.phone .logo { width: 24px; height: 24px; }
 body.phone .tb-stats { flex: 1; margin-left: 2px; gap: 12px; justify-content: flex-start; }
 body.phone .stat { flex-direction: column; align-items: flex-start; gap: 0; }
@@ -940,6 +940,27 @@ body.phone .scale-area:has(.carry-card) .belt { width: 110px; }
 .rk-day { font-size: 11.5px; color: var(--mute); }
 .rk-val { font-family: var(--f-mono); font-size: 16px; text-align: right; }
 .rk-val small { font-size: 11px; margin-left: 2px; }
+/* タイトルの右上(ランキング・ログイン)と、×で閉じられる案内・プロフィール */
+.t-panel { position: relative; }
+.t-panel.has-top { padding-top: 58px; }
+.t-panel > .t-top:first-child { margin-top: 0; }
+.t-panel.has-top > .t-top + * { margin-top: auto; }
+.t-top { position: absolute; top: 14px; right: 18px; display: flex; gap: 6px; align-items: center; }
+.t-top-btn { display: inline-flex; align-items: center; gap: 6px; }
+.t-top-me { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 4px; font-weight: 700; font-size: 13px; max-width: 13em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.acct-ic.sm { width: 24px; height: 24px; font-size: 12px; flex: none; }
+.acct { position: relative; }
+.acct:not(.in) { padding-right: 34px; }
+.acct-x { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border: none; background: transparent; border-radius: 50%; font-size: 20px; line-height: 1; color: var(--mute); cursor: pointer; }
+.acct-x:hover { background: #eef0f2; color: var(--ink); }
+.acct-lbl { display: block; font-size: 10px; color: var(--mute) !important; letter-spacing: .05em; }
+.acct-who small.ok { color: var(--ok); }
+.acct-stats { display: flex; gap: 14px; margin: 0; font-size: 12px; }
+.acct-stats dt { color: var(--mute); font-size: 10.5px; }
+.acct-stats dd { margin: 0; font-weight: 700; }
+body.phone .t-panel.has-top { padding-top: 54px; }
+body.phone .t-panel > *, body.phone .t-panel.has-top > .t-top + * { margin-top: 0; margin-bottom: 0; }
+body.phone .t-top { top: 10px; right: 12px; }
 
 </style>
 </head>
@@ -2252,7 +2273,7 @@ Object.assign(Art, {
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, owner: null, settings: { sound: true, speech: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
   load(snap) {
     let d = null;
     try { const raw = localStorage.getItem(CONFIG.saveKey); if (raw) d = JSON.parse(raw); } catch (e) { d = null; }
@@ -2675,6 +2696,7 @@ const Game = {
     else if (a === 'pause') this.setPause(!this.paused);
     else if (a === 'login') Cloud.login();
     else if (a === 'cloud-retry') Cloud.init();
+    else if (a === 'acct-hide') { Store.data.settings.hideAcct = true; Store.save(); Cloud.refresh(); Toast.show('案内を閉じました。ログインは右上のボタンからできます', 'info', 3200); }
     else if (a === 'ranking') Cloud.showRanking();
     else if (a === 'rank-total' || a === 'rank-best') Cloud.loadRanking(a.slice(5));
     else if (a === 'rename') Cloud.askName(false);
@@ -2761,6 +2783,13 @@ const Cloud = {
     if (!this.enabled()) return;
     this.status = 'loading'; this.refresh();
     try { await this.load(); } catch (e) { console.warn(e); this.status = 'error'; this.refresh(); return; }
+    this.watch();
+  },
+
+  // ログイン状態の変化を受け取る(1回だけ登録)
+  watch() {
+    if (this._watching || !this.fb) return;
+    this._watching = true;
     const { auth, A } = this.fb;
     A.onAuthStateChanged(auth, (u) => { this.onUser(u).catch((e) => { console.warn(e); this.status = 'error'; this.refresh(); }); });
   },
@@ -2780,6 +2809,7 @@ const Cloud = {
     }
     try {
       const { auth, A } = await this.load();
+      this.watch();
       const p = new A.GoogleAuthProvider();
       p.setCustomParameters({ prompt: 'select_account' });
       await A.signInWithPopup(auth, p);   // 結果は onAuthStateChanged で受け取る
@@ -2909,18 +2939,31 @@ const Cloud = {
   /* ===== 表示 ===== */
   name() { return this.user && this.user.name ? this.user.name : ''; },
 
-  // タイトル画面の「アカウント」欄
+  // タイトル画面の右上(ランキング・ログイン)
+  topHTML() {
+    if (!this.enabled()) return '';
+    return `<div class="t-top" id="ttop"><button class="btn small t-top-btn" data-act="g:ranking"><span aria-hidden="true">🏆</span>ランキング</button>
+      ${this.user ? `<span class="t-top-me" title="ログイン中"><span class="acct-ic sm" aria-hidden="true">☁</span>${U.esc(this.user.name || '…')}</span>`
+        : `<button class="btn small t-top-btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>ログイン</button>`}</div>`;
+  },
+
+  // タイトル画面の「アカウント」欄。ログイン前は案内(×で隠せる)、ログイン中はプロフィール
   boxHTML() {
     if (!this.enabled()) return '';
     const st = { loading: 'ログインを確認中…', saving: '保存中…', saved: 'クラウドに保存済み', in: 'クラウドに保存済み', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || '';
-    if (this.status === 'error' && !this.fb) return '<div class="acct" id="acct"><p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p><div class="acct-btns"><button class="btn small" data-act="g:cloud-retry">もう一度つなぐ</button></div></div>';
+    const hide = !this.user && Store.data.settings.hideAcct;
+    if (hide) return '<div id="acct" hidden></div>';
+    const x = '<button class="acct-x" data-act="g:acct-hide" aria-label="この案内を閉じる" title="閉じる(右上のボタンからいつでもログインできます)">×</button>';
+    if (this.status === 'error' && !this.fb) return `<div class="acct" id="acct">${x}<p class="small mute">ログイン機能につながりません。インターネットの接続を確かめてください(ログインしなくても遊べます)。</p><div class="acct-btns"><button class="btn small" data-act="g:cloud-retry">もう一度つなぐ</button></div></div>`;
     if (this.user) {
-      return `<div class="acct in" id="acct"><div class="acct-who"><span class="acct-ic" aria-hidden="true">☁</span><div><b>${U.esc(this.user.name || '…')}</b>さん<small class="${this.status === 'error' ? 'bad' : ''}">${st}</small></div></div>
-        <div class="acct-btns"><button class="btn small" data-act="g:ranking">ランキング</button><button class="btn small ghost" data-act="g:rename">名前を変える</button><button class="btn small ghost" data-act="g:logout">ログアウト</button></div></div>`;
+      const s = Store.data;
+      return `<div class="acct in" id="acct"><div class="acct-who"><span class="acct-ic" aria-hidden="true">☁</span><div><small class="acct-lbl">プロフィール</small><b>${U.esc(this.user.name || '…')}</b>さん<small class="${this.status === 'error' ? 'bad' : 'ok'}">${st}</small></div></div>
+        <dl class="acct-stats"><div><dt>ランク</dt><dd>${Game.rank(s.total).name}</dd></div><div><dt>累計</dt><dd>${U.fmt(s.total)}点</dd></div><div><dt>1日の最高</dt><dd>${s.bestDay ? U.fmt(s.bestDay.score) + '点' : '—'}</dd></div></dl>
+        <div class="acct-btns"><button class="btn small ghost" data-act="g:rename">名前を変える</button><button class="btn small ghost" data-act="g:logout">ログアウト</button></div></div>`;
     }
-    if (this.status === 'loading') return `<div class="acct" id="acct"><p class="small mute">${st}</p></div>`;
-    return `<div class="acct" id="acct"><p>ログインすると、<b>どの端末でも続きから</b>遊べて、<b>ランキング</b>にも参加できます。</p>
-      <div class="acct-btns"><button class="btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>Googleでログイン</button><button class="btn small" data-act="g:ranking">ランキングを見る</button></div></div>`;
+    if (this.status === 'loading') return `<div class="acct" id="acct">${x}<p class="small mute">${st}</p></div>`;
+    return `<div class="acct" id="acct">${x}<p>ログインすると、<b>どの端末でも続きから</b>遊べて、<b>ランキング</b>にも参加できます。</p>
+      <div class="acct-btns"><button class="btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>Googleでログイン</button></div></div>`;
   },
 
   // 状態が変わったら、タイトル画面なら描き直す(記録が変わったときは画面ごと)
@@ -2929,6 +2972,8 @@ const Cloud = {
     if (all && !Modal.open) { Scenes.title.enter(); return; }
     const box = document.getElementById('acct');
     if (box) box.outerHTML = this.boxHTML();
+    const top = document.getElementById('ttop');
+    if (top) top.outerHTML = this.topHTML();
     const ver = document.getElementById('tver'); if (ver) ver.textContent = Scenes.title.verText();
   },
 };
@@ -2951,7 +2996,8 @@ Scenes.title = {
         <div class="t-sub">${Flap.word('SIMULATOR')}</div>
         <div class="t-rows board">${demo.map((d) => `<div class="brow st-${d[5]}"><span class="cell time">${d[0]}</span><span class="cell fno">${d[1]}</span><span class="cell dest">${d[2]}</span><span class="cell gate">${d[3]}</span><span class="cell st">${d[4]}</span></div>`).join('')}</div>
       </section>
-      <section class="t-panel">
+      <section class="t-panel ${Cloud.enabled() ? 'has-top' : ''}">
+        ${Cloud.topHTML()}
         <div class="brand dark">${Art.logo()}<div><b>${DATA.airline.name}</b><small>${DATA.home.full} 旅客サービス</small></div></div>
         <p class="lede">あなたは空港の地上係員。チェックインカウンターで書類と荷物を確かめ、搭乗ゲートで順番どおりにご案内して、今日のフライトを定刻で送り出しましょう。</p>
         <ol class="howto">

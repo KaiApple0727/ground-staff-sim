@@ -15,7 +15,8 @@ Scenes.title = {
         <div class="t-sub">${Flap.word('SIMULATOR')}</div>
         <div class="t-rows board">${demo.map((d) => `<div class="brow st-${d[5]}"><span class="cell time">${d[0]}</span><span class="cell fno">${d[1]}</span><span class="cell dest">${d[2]}</span><span class="cell gate">${d[3]}</span><span class="cell st">${d[4]}</span></div>`).join('')}</div>
       </section>
-      <section class="t-panel">
+      <section class="t-panel ${Cloud.enabled() ? 'has-top' : ''}">
+        ${Cloud.topHTML()}
         <div class="brand dark">${Art.logo()}<div><b>${DATA.airline.name}</b><small>${DATA.home.full} 旅客サービス</small></div></div>
         <p class="lede">あなたは空港の地上係員。チェックインカウンターで書類と荷物を確かめ、搭乗ゲートで順番どおりにご案内して、今日のフライトを定刻で送り出しましょう。</p>
         <ol class="howto">

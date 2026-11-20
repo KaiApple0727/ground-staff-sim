@@ -1,7 +1,7 @@
 /* ---------- セーブ ---------- */
 const Store = {
   data: null,
-  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, owner: null, settings: { sound: true, speech: false } }; },
+  def() { return { v: 1, day: 1, total: 0, best: {}, medals: {}, bestDay: null, jobSeen: {}, owner: null, settings: { sound: true, speech: false, hideAcct: false } }; },
   load(snap) {
     let d = null;
     try { const raw = localStorage.getItem(CONFIG.saveKey); if (raw) d = JSON.parse(raw); } catch (e) { d = null; }
