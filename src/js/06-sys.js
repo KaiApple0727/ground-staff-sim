@@ -135,18 +135,25 @@ const Toast = {
 
 /* ---------- ダイアログ ---------- */
 const Modal = {
-  cb: [], open: false,
-  show({ title, body, actions, wide }) {
-    this.cb = actions.map((a) => a.run);
+  cb: [], open: false, soft: false,
+  // soft: 外側(暗いところ)を押すか Esc で閉じられる。ゲームの進行に必要なお知らせには付けない
+  show({ title, body, actions, wide, soft }) {
+    this.cb = actions.map((a) => a.run); this.soft = !!soft;
     const root = document.getElementById('modal-root');
     root.innerHTML = `<div class="modal-back"><div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="m-title">
       <h2 id="m-title">${title}</h2><div class="modal-body">${body}</div>
       <div class="modal-actions">${actions.map((a, i) => `<button class="btn ${a.cls || ''}" data-mact="${i}">${a.label}</button>`).join('')}</div></div></div>`;
     this.open = true;
+    if (soft) {
+      // 押し始めも外側だったときだけ閉じる(画像の範囲を決めるドラッグが外にはみ出しても閉じない)
+      const back = root.querySelector('.modal-back');
+      back.addEventListener('pointerdown', (e) => { this._down = e.target === back; });
+      back.addEventListener('click', (e) => { if (e.target === back && this._down) this.close(); this._down = false; });
+    }
     const btns = root.querySelectorAll('[data-mact]');
     if (btns.length) btns[btns.length - 1].focus({ preventScroll: true });   // 長い中身でも上から見えるように
   },
-  close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; },
+  close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; this.soft = false; },
   // ボタンを押したとき、モーダルの中の入力欄(name 付き)の値をまとめて渡す
   act(i) {
     const f = this.cb[i], vals = {};

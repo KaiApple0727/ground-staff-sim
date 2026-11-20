@@ -52,7 +52,7 @@ Scenes.title = {
     else if (a === 'pick') { const n = +ds.n; if (n >= 1 && n < Store.data.day) Game.startDay(n); }   // クリアした日だけ
     else if (a === 'speech') { const st = Store.data.settings; st.speech = !st.speech; Store.save(); this.enter(); }
     else if (a === 'reset') {
-      Modal.show({
+      Modal.show({ soft: true,
         title: '最初からやり直しますか?', body: '<p>勤務日数・スコア・ランクがすべてリセットされます。</p>',
         actions: [{ label: 'やめる', cls: 'ghost' }, { label: 'リセットする', cls: 'danger', run: () => { Store.reset(); this.enter(); } }],
       });

@@ -2480,18 +2480,25 @@ const Toast = {
 
 /* ---------- ダイアログ ---------- */
 const Modal = {
-  cb: [], open: false,
-  show({ title, body, actions, wide }) {
-    this.cb = actions.map((a) => a.run);
+  cb: [], open: false, soft: false,
+  // soft: 外側(暗いところ)を押すか Esc で閉じられる。ゲームの進行に必要なお知らせには付けない
+  show({ title, body, actions, wide, soft }) {
+    this.cb = actions.map((a) => a.run); this.soft = !!soft;
     const root = document.getElementById('modal-root');
     root.innerHTML = `<div class="modal-back"><div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="m-title">
       <h2 id="m-title">${title}</h2><div class="modal-body">${body}</div>
       <div class="modal-actions">${actions.map((a, i) => `<button class="btn ${a.cls || ''}" data-mact="${i}">${a.label}</button>`).join('')}</div></div></div>`;
     this.open = true;
+    if (soft) {
+      // 押し始めも外側だったときだけ閉じる(画像の範囲を決めるドラッグが外にはみ出しても閉じない)
+      const back = root.querySelector('.modal-back');
+      back.addEventListener('pointerdown', (e) => { this._down = e.target === back; });
+      back.addEventListener('click', (e) => { if (e.target === back && this._down) this.close(); this._down = false; });
+    }
     const btns = root.querySelectorAll('[data-mact]');
     if (btns.length) btns[btns.length - 1].focus({ preventScroll: true });   // 長い中身でも上から見えるように
   },
-  close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; },
+  close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; this.soft = false; },
   // ボタンを押したとき、モーダルの中の入力欄(name 付き)の値をまとめて渡す
   act(i) {
     const f = this.cb[i], vals = {};
@@ -2790,6 +2797,7 @@ const Game = {
 
   onKey(e) {
     if (e.key === 'Escape' && Manual.open) { Manual.hide(); return; }
+    if (e.key === 'Escape' && Modal.open && Modal.soft) { Modal.close(); return; }
     if (Modal.open || Manual.open || this.paused) return;
     if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     if (this.scene && this.scene.onKey) this.scene.onKey(e);
@@ -2811,7 +2819,7 @@ const Game = {
     else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'icon-crop') Cloud.showCropper();
     else if (a === 'logout') {
-      Modal.show({
+      Modal.show({ soft: true,
         title: 'ログアウトしますか？',
         body: '<p>ログアウトすると、<b>この端末の記録は最初の状態に戻ります</b>。記録はクラウドに残っているので、もう一度ログインすれば続きから遊べます。</p>',
         actions: [{ label: 'やめる', cls: 'ghost' }, { label: 'ログアウトする', cls: 'danger', run: () => Cloud.logout() }],
@@ -3071,7 +3079,7 @@ const Cloud = {
   async login(force) {
     if (!this.enabled()) return;
     if (this.inAppBrowser() && !force) {
-      Modal.show({
+      Modal.show({ soft: true,
         title: 'このブラウザではログインできないかもしれません',
         body: '<p>LINEなど、アプリの中で開いたページでは、Googleのログインが使えないことがあります。</p><p>右上などのメニューから<b>「Safariで開く」「ブラウザで開く」</b>を選んで、開き直してください。</p>',
         actions: [{ label: 'それでも試す', cls: 'ghost', run: () => this.login(true) }, { label: 'わかった', cls: 'primary' }],
@@ -3137,7 +3145,7 @@ const Cloud = {
 
   askName(first) {
     const cur = (this.user && this.user.name) || `スタッフ${U.digits(3)}`;
-    Modal.show({
+    Modal.show({ soft: !first,
       title: first ? 'ランキングに出す名前を決めましょう' : '名前を変える',
       body: `<p>ランキングやゲームの中で表示される名前です(${this.NAME_MAX}文字まで)。<b>本名ではなく、ニックネーム</b>がおすすめです。あとから変えられます。</p>
         <input class="name-input" name="name" maxlength="${this.NAME_MAX}" value="${U.esc(cur)}" autocomplete="off" aria-label="表示する名前">`,
@@ -3198,7 +3206,7 @@ const Cloud = {
     const max = Math.max(1, ...bests.map((b) => b.score));
     const jobs = Object.keys(DATA.jobs).filter((j) => st.jobs[j] && st.jobs[j].days);
     const status = { saving: '保存中…', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || 'クラウドに保存済み';
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'プロフィール',
       wide: true,
       body: `<div class="pf-head"><button class="pf-icon" data-act="g:icon" aria-label="アイコンを変える">${UIcon.html(this.user.icon, 'lg')}<span>変える</span></button>
@@ -3233,7 +3241,7 @@ const Cloud = {
     if (!this.user) return;
     if (!keep || !UIcon.valid(this._pend)) this._pend = UIcon.valid(this.user.icon) ? this.user.icon : UIcon.DEF;
     const custom = this._pend.startsWith('data:');
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'アイコンを変える',
       body: `<div class="ic-top"><div class="ic-prev" id="icprev">${UIcon.html(this._pend, 'xl')}</div>
           <div><p class="small">好きな絵を選ぶか、写真などの画像を選んでください。画像は、まん中の正方形が使われます。</p>
@@ -3261,7 +3269,7 @@ const Cloud = {
 
   showCropper() {
     if (!Cropper.img) return;
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'アイコンにする範囲を決める',
       body: Cropper.html(),
       actions: [{ label: 'もどる', cls: 'ghost', run: () => this.showIconPicker(true) }, {
@@ -3292,7 +3300,7 @@ const Cloud = {
 
   /* ===== ランキング ===== */
   showRanking(kind = 'total') {
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'ランキング',
       body: `<div class="rk-tabs" role="tablist"><button class="rk-tab" role="tab" data-act="g:rank-total" aria-selected="${kind === 'total'}">累計の点数</button><button class="rk-tab" role="tab" data-act="g:rank-best" aria-selected="${kind === 'best'}">1日の最高点</button></div>
         <ol class="rk-list" id="rklist"><li class="rk-msg">読み込み中…</li></ol>
@@ -3319,7 +3327,7 @@ const Cloud = {
     const n = (v) => (Number.isFinite(+v) ? Math.max(0, Math.round(+v)) : 0);
     const p = r.pub && typeof r.pub === 'object' ? r.pub : null, total = n(r.total), day = Math.max(1, n(r.day));
     const rank = Game.rank(total);
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'プロフィール',
       wide: true,
       body: `<div class="pf-head">${UIcon.html(UIcon.valid(r.icon) ? r.icon : UIcon.DEF, 'lg')}
@@ -3460,7 +3468,7 @@ Scenes.title = {
     else if (a === 'pick') { const n = +ds.n; if (n >= 1 && n < Store.data.day) Game.startDay(n); }   // クリアした日だけ
     else if (a === 'speech') { const st = Store.data.settings; st.speech = !st.speech; Store.save(); this.enter(); }
     else if (a === 'reset') {
-      Modal.show({
+      Modal.show({ soft: true,
         title: '最初からやり直しますか？', body: '<p>勤務日数・スコア・ランクがすべてリセットされます。</p>',
         actions: [{ label: 'やめる', cls: 'ghost' }, { label: 'リセットする', cls: 'danger', run: () => { Store.reset(); this.enter(); } }],
       });
@@ -4128,7 +4136,7 @@ Scenes.gate = {
     if (s.ob) notes.push(`<li><b>オーバーブッキング</b> 予約が座席より<b>${s.ob.need}名分</b>多くなっています。搭乗を始める前に、便を変えてくれるお客様を募りましょう。</li>`);
     if (notes.length) {
       Sfx.chimeShort();
-      Modal.show({ title: `${f.gate}番搭乗口からのお知らせ`, body: `<ul class="notice-list">${notes.join('')}</ul>`, actions: [{ label: 'わかりました', cls: 'primary' }] });
+      Modal.show({ soft: true, title: `${f.gate}番搭乗口からのお知らせ`, body: `<ul class="notice-list">${notes.join('')}</ul>`, actions: [{ label: 'わかりました', cls: 'primary' }] });
     } else Toast.show(`${f.gate}番搭乗口に着きました。まずは「事前改札」のアナウンスから始めましょう`, 'info', 4200);
   },
 

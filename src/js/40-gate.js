@@ -34,7 +34,7 @@ Scenes.gate = {
     if (s.ob) notes.push(`<li><b>オーバーブッキング</b> 予約が座席より<b>${s.ob.need}名分</b>多くなっています。搭乗を始める前に、便を変えてくれるお客様を募りましょう。</li>`);
     if (notes.length) {
       Sfx.chimeShort();
-      Modal.show({ title: `${f.gate}番搭乗口からのお知らせ`, body: `<ul class="notice-list">${notes.join('')}</ul>`, actions: [{ label: 'わかりました', cls: 'primary' }] });
+      Modal.show({ soft: true, title: `${f.gate}番搭乗口からのお知らせ`, body: `<ul class="notice-list">${notes.join('')}</ul>`, actions: [{ label: 'わかりました', cls: 'primary' }] });
     } else Toast.show(`${f.gate}番搭乗口に着きました。まずは「事前改札」のアナウンスから始めましょう`, 'info', 4200);
   },
 

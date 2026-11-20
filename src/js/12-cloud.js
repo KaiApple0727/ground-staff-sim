@@ -50,7 +50,7 @@ const Cloud = {
   async login(force) {
     if (!this.enabled()) return;
     if (this.inAppBrowser() && !force) {
-      Modal.show({
+      Modal.show({ soft: true,
         title: 'このブラウザではログインできないかもしれません',
         body: '<p>LINEなど、アプリの中で開いたページでは、Googleのログインが使えないことがあります。</p><p>右上などのメニューから<b>「Safariで開く」「ブラウザで開く」</b>を選んで、開き直してください。</p>',
         actions: [{ label: 'それでも試す', cls: 'ghost', run: () => this.login(true) }, { label: 'わかった', cls: 'primary' }],
@@ -116,7 +116,7 @@ const Cloud = {
 
   askName(first) {
     const cur = (this.user && this.user.name) || `スタッフ${U.digits(3)}`;
-    Modal.show({
+    Modal.show({ soft: !first,
       title: first ? 'ランキングに出す名前を決めましょう' : '名前を変える',
       body: `<p>ランキングやゲームの中で表示される名前です(${this.NAME_MAX}文字まで)。<b>本名ではなく、ニックネーム</b>がおすすめです。あとから変えられます。</p>
         <input class="name-input" name="name" maxlength="${this.NAME_MAX}" value="${U.esc(cur)}" autocomplete="off" aria-label="表示する名前">`,
@@ -177,7 +177,7 @@ const Cloud = {
     const max = Math.max(1, ...bests.map((b) => b.score));
     const jobs = Object.keys(DATA.jobs).filter((j) => st.jobs[j] && st.jobs[j].days);
     const status = { saving: '保存中…', error: '保存できませんでした(あとで自動でやり直します)' }[this.status] || 'クラウドに保存済み';
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'プロフィール',
       wide: true,
       body: `<div class="pf-head"><button class="pf-icon" data-act="g:icon" aria-label="アイコンを変える">${UIcon.html(this.user.icon, 'lg')}<span>変える</span></button>
@@ -212,7 +212,7 @@ const Cloud = {
     if (!this.user) return;
     if (!keep || !UIcon.valid(this._pend)) this._pend = UIcon.valid(this.user.icon) ? this.user.icon : UIcon.DEF;
     const custom = this._pend.startsWith('data:');
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'アイコンを変える',
       body: `<div class="ic-top"><div class="ic-prev" id="icprev">${UIcon.html(this._pend, 'xl')}</div>
           <div><p class="small">好きな絵を選ぶか、写真などの画像を選んでください。画像は、まん中の正方形が使われます。</p>
@@ -240,7 +240,7 @@ const Cloud = {
 
   showCropper() {
     if (!Cropper.img) return;
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'アイコンにする範囲を決める',
       body: Cropper.html(),
       actions: [{ label: 'もどる', cls: 'ghost', run: () => this.showIconPicker(true) }, {
@@ -271,7 +271,7 @@ const Cloud = {
 
   /* ===== ランキング ===== */
   showRanking(kind = 'total') {
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'ランキング',
       body: `<div class="rk-tabs" role="tablist"><button class="rk-tab" role="tab" data-act="g:rank-total" aria-selected="${kind === 'total'}">累計の点数</button><button class="rk-tab" role="tab" data-act="g:rank-best" aria-selected="${kind === 'best'}">1日の最高点</button></div>
         <ol class="rk-list" id="rklist"><li class="rk-msg">読み込み中…</li></ol>
@@ -298,7 +298,7 @@ const Cloud = {
     const n = (v) => (Number.isFinite(+v) ? Math.max(0, Math.round(+v)) : 0);
     const p = r.pub && typeof r.pub === 'object' ? r.pub : null, total = n(r.total), day = Math.max(1, n(r.day));
     const rank = Game.rank(total);
-    Modal.show({
+    Modal.show({ soft: true,
       title: 'プロフィール',
       wide: true,
       body: `<div class="pf-head">${UIcon.html(UIcon.valid(r.icon) ? r.icon : UIcon.DEF, 'lg')}

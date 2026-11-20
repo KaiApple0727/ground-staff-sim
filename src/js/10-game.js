@@ -46,6 +46,7 @@ const Game = {
 
   onKey(e) {
     if (e.key === 'Escape' && Manual.open) { Manual.hide(); return; }
+    if (e.key === 'Escape' && Modal.open && Modal.soft) { Modal.close(); return; }
     if (Modal.open || Manual.open || this.paused) return;
     if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     if (this.scene && this.scene.onKey) this.scene.onKey(e);
@@ -67,7 +68,7 @@ const Game = {
     else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'icon-crop') Cloud.showCropper();
     else if (a === 'logout') {
-      Modal.show({
+      Modal.show({ soft: true,
         title: 'ログアウトしますか?',
         body: '<p>ログアウトすると、<b>この端末の記録は最初の状態に戻ります</b>。記録はクラウドに残っているので、もう一度ログインすれば続きから遊べます。</p>',
         actions: [{ label: 'やめる', cls: 'ghost' }, { label: 'ログアウトする', cls: 'danger', run: () => Cloud.logout() }],
