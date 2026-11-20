@@ -984,3 +984,5 @@ button.t-top-me:hover { border-color: var(--ink); }
 body.phone .pf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 body.phone .pf-rank { margin-left: 0; text-align: left; width: 100%; }
 body.phone .modal { padding: 16px; }
+.rules-h { margin: 6px 0 0; font-size: 13px; color: var(--brand); border-bottom: 1px solid var(--line); padding-bottom: 3px; }
+.rules-h:first-child { margin-top: 0; }

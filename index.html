@@ -994,6 +994,8 @@ button.t-top-me:hover { border-color: var(--ink); }
 body.phone .pf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 body.phone .pf-rank { margin-left: 0; text-align: left; width: 100%; }
 body.phone .modal { padding: 16px; }
+.rules-h { margin: 6px 0 0; font-size: 13px; color: var(--brand); border-bottom: 1px solid var(--line); padding-bottom: 3px; }
+.rules-h:first-child { margin-top: 0; }
 
 </style>
 </head>
@@ -3160,10 +3162,16 @@ Scenes.briefing = {
     d.flights.filter((f) => f.canceled).forEach((cf) => events.push(`<p><b>欠航</b> ${cf.no} ${cf.ap.name}行きは${d.event === 'typhoon' ? '台風のため' : '機材故障のため'}欠航。振替のお客様がカウンターに来ます。</p>`));
     if (d.cfg.gate.overbook) events.push(`<p><b>予約超過</b> ${gf.no} は予約が座席より多い見込みです(オーバーブッキング)。</p>`);
     const newJob = d.mid && !Store.data.jobSeen[d.mid];
-    if (newJob) items.unshift(...Manual.jobItems(d.mid));
-    const rules = items.length
-      ? items.map((it) => `<div class="rule"><small>${it.sec}</small><b>${it.t}</b><p>${it.b}</p></div>`).join('')
-      : '<p class="mute">新しいルールはありません。これまでのルールをすべて使います。</p>';
+    // 新しい仕事のルールと、今日から加わるルールは分けて見せる
+    const card = (it) => `<div class="rule"><small>${it.sec}</small><b>${it.t}</b><p>${it.b}</p></div>`;
+    const dayTitle = d.n === 1 ? 'まず覚えること' : '今日から加わるルール';
+    const groups = [];
+    if (newJob) groups.push([`新しい仕事「${DATA.jobs[d.mid].name}」のルール`, Manual.jobItems(d.mid)]);
+    if (items.length) groups.push([dayTitle, items]);
+    const heading = groups.length === 1 ? groups[0][0] : groups.length ? '今日おぼえること' : dayTitle;
+    const rules = !groups.length ? '<p class="mute">新しいルールはありません。これまでのルールをすべて使います。</p>'
+      : groups.length === 1 ? groups[0][1].map(card).join('')
+      : groups.map(([t, list]) => `<h4 class="rules-h">${t}</h4>${list.map(card).join('')}`).join('');
     document.getElementById('app').innerHTML = Hud.frame(`<div class="brief">
       <section class="panel b-main">
         <p class="eyebrow">本日の勤務 · ${U.jp(d.date)}${Cloud.name() ? ` · 担当 ${U.esc(Cloud.name())}` : ''}</p>
@@ -3180,7 +3188,7 @@ Scenes.briefing = {
       </section>
       <section class="panel b-rules">
         <div class="b-goals"><small>今日の目標(達成するとメダル)</small><ul>${d.goals.map((id) => `<li><span class="medal" aria-hidden="true"></span>${U.esc(Goals.label(id, d))}</li>`).join('')}</ul></div>
-        <h3>${newJob ? `新しい仕事「${DATA.jobs[d.mid].name}」のルール` : d.n === 1 ? 'まず覚えること' : '今日から加わるルール'}</h3>
+        <h3>${heading}</h3>
         <div class="rules">${rules}</div>
         <button class="btn ghost small" data-act="g:manual">マニュアルをすべて見る</button>
       </section>
