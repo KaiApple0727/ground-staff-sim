@@ -71,7 +71,10 @@ const Store = {
     return changed;
   },
   reset() { const s = this.data.settings; this.data = this.def(); this.data.settings = s; this.save(); },
-  recalcTotal() { this.data.total = Object.values(this.data.best).reduce((s, b) => s + Math.max(0, b.score || 0), 0); },
+  recalcTotal() {
+    this.data.total = Object.values(this.data.best).reduce((s, b) => s + Math.max(0, b.score || 0), 0);
+    for (const [n, b] of Object.entries(this.data.best)) if (!this.data.bestDay || (b.score || 0) > this.data.bestDay.score) this.data.bestDay = { score: b.score || 0, n: +n };
+  },
 };
 
 /* ---------- 効果音(Web Audio で合成) ---------- */
@@ -151,6 +154,8 @@ const Modal = {
       back.addEventListener('click', (e) => { if (e.target === back && this._down) this.close(); this._down = false; });
     }
     const btns = root.querySelectorAll('[data-mact]');
+    // 入力欄で Enter を押したら、いちばん右のボタン(決定)を押したことにする
+    root.querySelectorAll('input:not([type="file"])').forEach((inp) => inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); this.act(btns.length - 1); } }));
     if (btns.length) btns[btns.length - 1].focus({ preventScroll: true });   // 長い中身でも上から見えるように
   },
   close() { document.getElementById('modal-root').innerHTML = ''; this.open = false; this.soft = false; },

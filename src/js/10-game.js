@@ -57,6 +57,13 @@ const Game = {
     else if (a === 'manual-close') Manual.hide();
     else if (a === 'pause') this.setPause(!this.paused);
     else if (a === 'login') Cloud.login();
+    else if (a === 'login-google') { Modal.close(); Cloud.loginGoogle(); }
+    else if (a === 'login-email') Cloud.emailForm('login');
+    else if (a === 'login-guest') { Modal.close(); Cloud.loginGuest(); }
+    else if (a === 'email-mode') Cloud.emailMode(ds.m);
+    else if (a === 'upgrade') Cloud.showUpgrade();
+    else if (a === 'link-google') { Modal.close(); Cloud.linkGoogle(); }
+    else if (a === 'link-email') Cloud.emailForm('link');
     else if (a === 'cloud-retry') Cloud.init();
     else if (a === 'acct-hide') { Store.data.settings.hideAcct = true; Store.save(); Cloud.refresh(); Toast.show('案内を閉じました。ログインは右上のボタンからできます', 'info', 3200); }
     else if (a === 'ranking') Cloud.showRanking();
@@ -68,10 +75,14 @@ const Game = {
     else if (a === 'icon-pick') Cloud.pickIcon(ds.id);
     else if (a === 'icon-crop') Cloud.showCropper();
     else if (a === 'logout') {
+      const guest = Cloud.user && Cloud.user.kind === 'anon';
       Modal.show({ soft: true,
         title: 'ログアウトしますか?',
-        body: '<p>ログアウトすると、<b>この端末の記録は最初の状態に戻ります</b>。記録はクラウドに残っているので、もう一度ログインすれば続きから遊べます。</p>',
-        actions: [{ label: 'やめる', cls: 'ghost' }, { label: 'ログアウトする', cls: 'danger', run: () => Cloud.logout() }],
+        body: guest
+          ? '<p><b>ゲストのままログアウトすると、この記録にはもう二度ともどれません。</b>ほかの端末でも続けたいときは、先に「アカウントに引き継ぐ」をしてください。</p>'
+          : '<p>ログアウトすると、<b>この端末の記録は最初の状態に戻ります</b>。記録はクラウドに残っているので、もう一度ログインすれば続きから遊べます。</p>',
+        actions: guest ? [{ label: 'やめる', cls: 'ghost' }, { label: '引き継ぐ', cls: 'primary', run: () => Cloud.showUpgrade() }, { label: 'それでもログアウト', cls: 'danger', run: () => Cloud.logout() }]
+          : [{ label: 'やめる', cls: 'ghost' }, { label: 'ログアウトする', cls: 'danger', run: () => Cloud.logout() }],
       });
     }
     else if (a === 'rotate-ok') { const h = document.getElementById('rotate-hint'); if (h) h.hidden = true; }

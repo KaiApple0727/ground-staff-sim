@@ -22,6 +22,7 @@ const Cloud = {
         .then(([app, A, F]) => {
           const a = app.initializeApp(this.config);
           this.fb = { auth: A.getAuth(a), db: F.getFirestore(a), A, F };
+          this.fb.auth.languageCode = 'ja';   // パスワード再設定のメールを日本語に
           return this.fb;
         })
         .catch((e) => { this._loading = null; throw e; });
@@ -47,37 +48,195 @@ const Cloud = {
   // LINE などアプリの中のブラウザでは、Googleがログインを受け付けない
   inAppBrowser() { return /\bLine\/|FBAN|FBAV|Instagram|MicroMessenger|; wv\)/i.test(navigator.userAgent || ''); },
 
-  async login(force) {
+  // ログインの方法を選ぶ画面
+  login() {
     if (!this.enabled()) return;
+    Modal.show({ soft: true,
+      title: 'ログイン',
+      body: `<p class="small">ログインすると、ランキングに参加できます。Googleかメールアドレスなら、<b>どの端末でも続きから</b>遊べます。</p>
+        <div class="lg-opts">
+          <button class="lg-opt" data-act="g:login-google"><span class="g-ic big" aria-hidden="true">G</span><span><b>Googleでログイン</b><small>Googleのアカウントを使う</small></span></button>
+          <button class="lg-opt" data-act="g:login-email"><span class="lg-ic" aria-hidden="true">✉</span><span><b>メールアドレスでログイン</b><small>はじめての方の登録もここから</small></span></button>
+          <button class="lg-opt" data-act="g:login-guest"><span class="lg-ic guest" aria-hidden="true">👤</span><span><b>ゲストで参加</b><small>名前だけでランキングに参加。記録はこの端末だけ(あとでアカウントに引き継げます)</small></span></button>
+        </div>`,
+      actions: [{ label: '閉じる', cls: 'ghost' }],
+    });
+  },
+
+  // 失敗したときのメッセージ
+  authMsg(e, fallback) {
+    const code = (e && e.code) || '';
+    return {
+      'auth/popup-blocked': 'ログインの画面がブロックされました。ブラウザの設定で、このサイトのポップアップを許可してください。',
+      'auth/unauthorized-domain': 'このURLはFirebaseで許可されていません(Authentication の「承認済みドメイン」を確認してください)。',
+      'auth/network-request-failed': 'インターネットにつながっていないようです。',
+      'auth/operation-not-allowed': 'このログイン方法はまだ使えません(Firebase の「Sign-in method」で有効にしてください)。',
+      'auth/admin-restricted-operation': 'このログイン方法はまだ使えません(Firebase の「Sign-in method」で有効にしてください)。',
+      'auth/invalid-email': 'メールアドレスの形が正しくありません。',
+      'auth/invalid-credential': 'メールアドレスかパスワードがちがいます。',
+      'auth/wrong-password': 'メールアドレスかパスワードがちがいます。',
+      'auth/user-not-found': 'メールアドレスかパスワードがちがいます。',
+      'auth/email-already-in-use': 'このメールアドレスは、もう登録されています。「ログイン」から入ってください。',
+      'auth/weak-password': 'パスワードは6文字以上にしてください。',
+      'auth/too-many-requests': '何度も失敗したので、しばらく待ってからやり直してください。',
+      'auth/requires-recent-login': 'もう一度ログインしてから、やり直してください。',
+    }[code] || `${fallback || 'ログインできませんでした'}${code ? `(${code})` : ''}。`;
+  },
+  quiet(e) { const c = (e && e.code) || ''; return c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request'; },
+
+  async ready() { const fb = await this.load(); this.watch(); return fb; },
+
+  // Google でログイン(LINE などアプリの中のブラウザでは使えないことがある)
+  async loginGoogle(force) {
     if (this.inAppBrowser() && !force) {
       Modal.show({ soft: true,
-        title: 'このブラウザではログインできないかもしれません',
-        body: '<p>LINEなど、アプリの中で開いたページでは、Googleのログインが使えないことがあります。</p><p>右上などのメニューから<b>「Safariで開く」「ブラウザで開く」</b>を選んで、開き直してください。</p>',
-        actions: [{ label: 'それでも試す', cls: 'ghost', run: () => this.login(true) }, { label: 'わかった', cls: 'primary' }],
+        title: 'このブラウザではGoogleのログインが使えないかもしれません',
+        body: '<p>LINEなど、アプリの中で開いたページでは、Googleのログインが使えないことがあります。メニューから<b>「Safariで開く」「ブラウザで開く」</b>を選んで開き直すか、<b>メールアドレス</b>か<b>ゲスト</b>で参加してください。</p>',
+        actions: [{ label: 'それでも試す', cls: 'ghost', run: () => this.loginGoogle(true) }, { label: 'ほかの方法にする', cls: 'primary', run: () => this.login() }],
       });
       return;
     }
     try {
-      const { auth, A } = await this.load();
-      this.watch();
-      const p = new A.GoogleAuthProvider();
-      p.setCustomParameters({ prompt: 'select_account' });
-      await A.signInWithPopup(auth, p);   // 結果は onAuthStateChanged で受け取る
+      const { auth, A } = await this.ready();
+      await A.signInWithPopup(auth, this.google(A));   // 結果は onAuthStateChanged で受け取る
+    } catch (e) { if (!this.quiet(e)) Toast.show(this.authMsg(e), 'bad', 5200); }
+  },
+  google(A) { const p = new A.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); return p; },
+
+  async loginGuest() {
+    try { const { auth, A } = await this.ready(); await A.signInAnonymously(auth); }
+    catch (e) { Toast.show(this.authMsg(e), 'bad', 5200); }
+  },
+
+  /* ===== メールアドレス(ログイン・登録・パスワード再設定・ゲストからの引き継ぎ) ===== */
+  emailForm(mode = 'login', err = '', email = '') {
+    const T = { login: 'メールアドレスでログイン', signup: 'メールアドレスで登録', reset: 'パスワードの再設定', link: 'メールアドレスに引き継ぐ' };
+    const OK = { login: 'ログイン', signup: '登録する', reset: '再設定のメールを送る', link: '引き継ぐ' };
+    const pw2 = mode === 'signup' || mode === 'link';
+    Modal.show({ soft: true,
+      title: T[mode],
+      body: `${err ? `<p class="lg-err" role="alert">${U.esc(err)}</p>` : ''}
+        ${mode === 'reset' ? '<p class="small">登録したメールアドレスに、新しいパスワードを決めるためのメールを送ります。</p>' : ''}
+        ${mode === 'link' ? '<p class="small">今のゲストの記録を、このメールアドレスのアカウントに引き継ぎます。ほかの端末でも続きから遊べるようになります。</p>' : ''}
+        <label class="lg-f"><span>メールアドレス</span><input name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" value="${U.esc(email)}"></label>
+        ${mode !== 'reset' ? `<label class="lg-f"><span>パスワード${pw2 ? '(6文字以上)' : ''}</span><input name="pw" type="password" autocomplete="${pw2 ? 'new-password' : 'current-password'}"></label>` : ''}
+        ${pw2 ? '<label class="lg-f"><span>パスワード(確認のため、もう一度)</span><input name="pw2" type="password" autocomplete="new-password"></label>' : ''}
+        <p class="lg-links small">${mode === 'login' ? '<button class="linkbtn" data-act="g:email-mode" data-m="signup">はじめての方は「新しく登録」</button><button class="linkbtn" data-act="g:email-mode" data-m="reset">パスワードを忘れた</button>'
+          : mode === 'link' ? '' : '<button class="linkbtn" data-act="g:email-mode" data-m="login">登録ずみの方は「ログイン」</button>'}</p>`,
+      actions: [{ label: 'もどる', cls: 'ghost', run: () => (mode === 'link' ? this.showUpgrade() : this.login()) }, { label: OK[mode], cls: 'primary', run: (v) => this.emailSubmit(mode, v || {}) }],
+    });
+    const f = document.querySelector('#modal-root input[name="email"]'); if (f && !email) f.focus({ preventScroll: true });
+  },
+
+  emailMode(m) {
+    const f = document.querySelector('#modal-root input[name="email"]');
+    this.emailForm(m, '', f ? f.value : '');
+  },
+
+  async emailSubmit(mode, v) {
+    const email = String(v.email || '').trim(), pw = String(v.pw || '');
+    const again = (msg) => this.emailForm(mode, msg, email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { again('メールアドレスを正しく入れてください。'); return; }
+    if (mode !== 'reset' && pw.length < 6) { again('パスワードは6文字以上にしてください。'); return; }
+    if ((mode === 'signup' || mode === 'link') && pw !== v.pw2) { again('確認のパスワードが、上のパスワードとちがいます。'); return; }
+    try {
+      const { auth, A } = await this.ready();
+      if (mode === 'login') await A.signInWithEmailAndPassword(auth, email, pw);
+      else if (mode === 'signup') await A.createUserWithEmailAndPassword(auth, email, pw);
+      else if (mode === 'reset') {
+        await A.sendPasswordResetEmail(auth, email);
+        Toast.show('再設定のメールを送りました。届かないときは迷惑メールのフォルダも見てください', 'ok', 6000);
+        this.emailForm('login', '', email);
+      } else if (mode === 'link') {
+        const r = await A.linkWithCredential(auth.currentUser, A.EmailAuthProvider.credential(email, pw));
+        this.upgraded(r && r.user);
+      }
     } catch (e) {
       const code = (e && e.code) || '';
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
-      const msg = {
-        'auth/popup-blocked': 'ログインの画面がブロックされました。ブラウザの設定で、このサイトのポップアップを許可してください。',
-        'auth/unauthorized-domain': 'このURLはFirebaseで許可されていません(Authentication の「承認済みドメイン」を確認してください)。',
-        'auth/network-request-failed': 'インターネットにつながっていないようです。',
-      }[code] || `ログインできませんでした${code ? `(${code})` : ''}。`;
-      Toast.show(msg, 'bad', 5200);
+      if (mode === 'link' && (code === 'auth/email-already-in-use' || code === 'auth/credential-already-in-use')) {
+        this.switchWithGuest('このメールアドレスは、もう登録されています。', async () => { const { auth, A } = this.fb; await A.signInWithEmailAndPassword(auth, email, pw); });
+        return;
+      }
+      again(this.authMsg(e));
     }
+  },
+
+  /* ===== ゲストから、ほかの端末でも使えるアカウントへ引き継ぐ ===== */
+  showUpgrade() {
+    Modal.show({ soft: true,
+      title: 'アカウントに引き継ぐ',
+      body: `<p class="small">今のゲストの記録(名前・アイコン・点数・統計)をそのまま引き継いで、<b>ほかの端末でも続きから</b>遊べるようにします。</p>
+        <div class="lg-opts">
+          <button class="lg-opt" data-act="g:link-google"><span class="g-ic big" aria-hidden="true">G</span><span><b>Googleに引き継ぐ</b><small>Googleのアカウントでログインできるようになる</small></span></button>
+          <button class="lg-opt" data-act="g:link-email"><span class="lg-ic" aria-hidden="true">✉</span><span><b>メールアドレスに引き継ぐ</b><small>メールアドレスとパスワードでログインできるようになる</small></span></button>
+        </div>`,
+      actions: [{ label: 'もどる', cls: 'ghost', run: () => this.showProfile() }],
+    });
+  },
+
+  async linkGoogle() {
+    try {
+      const { auth, A } = await this.ready();
+      const r = await A.linkWithPopup(auth.currentUser, this.google(A));
+      this.upgraded(r && r.user);
+    } catch (e) {
+      const code = (e && e.code) || '';
+      if (code === 'auth/credential-already-in-use' || code === 'auth/email-already-in-use') {
+        const { A } = this.fb, cred = A.GoogleAuthProvider.credentialFromError(e);
+        if (cred) { this.switchWithGuest('このGoogleアカウントは、もう登録されています。', async () => { await A.signInWithCredential(this.fb.auth, cred); }); return; }
+      }
+      if (!this.quiet(e)) Toast.show(this.authMsg(e, '引き継げませんでした'), 'bad', 5200);
+    }
+  },
+
+  // 引き継ぎ先のアカウントがもうあるとき:そちらでログインして、ゲストの記録を合わせる
+  switchWithGuest(why, signIn) {
+    Modal.show({ soft: true,
+      title: 'もうあるアカウントです',
+      body: `<p>${U.esc(why)}そのアカウントでログインして、<b>今のゲストの記録を合わせますか?</b></p><p class="small mute">日ごとの最高点・メダル・統計は、よいほうが残ります。名前とアイコンは、そのアカウントのものになります。</p>`,
+      actions: [{ label: 'やめる', cls: 'ghost' }, {
+        label: 'ログインして合わせる', cls: 'primary',
+        run: async () => {
+          clearTimeout(this._t);
+          const prev = this.user, owner = Store.data.owner;
+          Store.data.owner = null;   // 次にログインする人に、この端末の記録を合わせる
+          this.user = null;
+          try {
+            if (prev && prev.kind === 'anon') await this.dropGuest(prev.uid);   // ランキングにゲストの行が残らないように
+            await signIn();
+          } catch (e) { this.user = prev; Store.data.owner = owner; Toast.show(this.authMsg(e), 'bad', 5200); }
+        },
+      }],
+    });
+  },
+
+  // ゲストの記録(ランキングの行・保存)を消す。ルールで消せないときは何もしない
+  async dropGuest(uid) {
+    try {
+      const { db, F } = this.fb;
+      if (!F.deleteDoc) return;
+      await F.deleteDoc(F.doc(db, 'ranking', uid));
+      await F.deleteDoc(F.doc(db, 'saves', uid));
+    } catch (e) { console.warn(e); }
+  },
+
+  upgraded(u) {
+    if (this.user) this.user.kind = this.kindOf(u) || 'password';
+    Toast.show('引き継ぎました。ほかの端末でも、同じ方法でログインすれば続きから遊べます', 'ok', 5200);
+    this.refresh(true);
+    this.showProfile();
+  },
+
+  kindOf(u) {
+    if (!u) return null;
+    if (u.isAnonymous) return 'anon';
+    return (u.providerData || []).some((p) => p && p.providerId === 'google.com') ? 'google' : 'password';
   },
 
   async logout() {
     if (!this.fb) return;
     clearTimeout(this._t);
+    if (this.user && this.user.kind === 'anon') await this.dropGuest(this.user.uid);   // もどれないゲストの記録は消しておく
     this.user = null; this.status = 'out';     // 先に外して、リセットした記録をクラウドに送らないようにする
     try { await this.fb.A.signOut(this.fb.auth); } catch (e) { console.warn(e); }
     Store.reset();
@@ -92,7 +251,7 @@ const Cloud = {
       this.status = 'out'; this.refresh(was); return;
     }
     if (this.user && this.user.uid === u.uid) return;
-    this.user = { uid: u.uid, name: null }; this.status = 'loading'; this.refresh();
+    this.user = { uid: u.uid, name: null, kind: this.kindOf(u), email: u.email || '' }; this.status = 'loading'; this.refresh();
     const { db, F } = this.fb;
     const snap = await F.getDoc(F.doc(db, 'saves', u.uid));
     const cloud = snap.exists() ? snap.data() : null;
@@ -181,8 +340,10 @@ const Cloud = {
       title: 'プロフィール',
       wide: true,
       body: `<div class="pf-head"><button class="pf-icon" data-act="g:icon" aria-label="アイコンを変える">${UIcon.html(this.user.icon, 'lg')}<span>変える</span></button>
-          <div class="pf-who"><b>${U.esc(this.user.name)}</b>さん<small class="${this.status === 'error' ? 'bad' : 'ok'}">${status}</small></div>
+          <div class="pf-who"><b>${U.esc(this.user.name)}</b>さん<small class="${this.status === 'error' ? 'bad' : 'ok'}">${status}</small>
+            <small class="pf-kind">${this.user.kind === 'anon' ? 'ゲスト(この端末だけ)' : this.user.kind === 'google' ? 'Googleでログイン中' : `メールでログイン中${this.user.email ? `(${U.esc(this.user.email)})` : ''}`}</small></div>
           <div class="pf-rank"><small>ランク</small><b>${r.name}</b><span>${nx ? `次の「${nx.name}」まで あと${U.fmt(nx.min - s.total)}点` : '最高ランクです'}</span></div></div>
+        ${this.user.kind === 'anon' ? '<div class="pf-guest"><p><b>ゲストで参加中です。</b>この端末のブラウザのデータを消したり、ログアウトしたりすると、この記録にはもどれません。</p><button class="btn small primary" data-act="g:upgrade">アカウントに引き継ぐ</button></div>' : ''}
         <h3 class="pf-h">これまでの統計</h3>
         ${st.shifts ? '' : '<p class="small mute">勤務を終えるごとに、ここに記録がたまっていきます(この機能を入れる前の勤務は、点数と★・メダルだけ反映されています)。</p>'}
         <div class="pf-grid">
@@ -350,7 +511,7 @@ const Cloud = {
     if (!this.enabled()) return '';
     return `<div class="t-top" id="ttop"><button class="btn small t-top-btn" data-act="g:ranking"><span aria-hidden="true">🏆</span>ランキング</button>
       ${this.user ? `<button class="t-top-me" data-act="g:profile" aria-label="プロフィールと統計を見る">${UIcon.html(this.user.icon, 'sm')}<span class="t-top-nm">${U.esc(this.user.name || '…')}</span><span class="t-top-st ${this.status === 'error' ? 'bad' : ''}" aria-hidden="true">${this.status === 'saving' ? '…' : this.status === 'error' ? '!' : ''}</span></button>`
-        : `<button class="btn small t-top-btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>ログイン</button>`}</div>`;
+        : '<button class="btn small t-top-btn" data-act="g:login"><span aria-hidden="true">🔑</span>ログイン</button>'}</div>`;
   },
 
   // タイトル画面の「アカウント」欄。ログイン前は案内(×で隠せる)、ログイン中はプロフィール
@@ -369,7 +530,7 @@ const Cloud = {
     }
     if (this.status === 'loading') return `<div class="acct" id="acct">${x}<p class="small mute">${st}</p></div>`;
     return `<div class="acct" id="acct">${x}<p>ログインすると、<b>どの端末でも続きから</b>遊べて、<b>ランキング</b>にも参加できます。</p>
-      <div class="acct-btns"><button class="btn google" data-act="g:login"><span class="g-ic" aria-hidden="true">G</span>Googleでログイン</button></div></div>`;
+      <div class="acct-btns"><button class="btn" data-act="g:login">ログイン・登録する</button><small class="mute">Google・メールアドレス・ゲスト</small></div></div>`;
   },
 
   // 状態が変わったら、タイトル画面なら描き直す(記録が変わったときは画面ごと)
